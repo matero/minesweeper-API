@@ -90,12 +90,6 @@ public final class Board
     return cells[row][column];
   }
 
-  static Board easy() { return of(GameLevel.EASY); }
-
-  static Board intermediate() { return of(GameLevel.INTERMEDIATE); }
-
-  static Board expert() { return of(GameLevel.EXPERT); }
-
   public static Board of(final GameLevel level) { return custom(level.rows, level.columns, level.mines); }
 
   public static Board custom(final int desiredRows, final int desiredColumns, final int desiredMines)
@@ -123,7 +117,7 @@ public final class Board
       }
       this.rows = rows;
       this.columns = columns;
-      this.cells = new int[rows][columns];
+      cells = new int[rows][columns];
     }
 
     Board build() { return new Board(cells); }

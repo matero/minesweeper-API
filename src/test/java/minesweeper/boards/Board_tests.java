@@ -25,57 +25,29 @@ package minesweeper.boards;
 
 import minesweeper.games.GameLevel;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class Board_tests
 {
-  @Test void can_create_easy_boards()
+  @ParameterizedTest
+  @EnumSource(GameLevel.class)
+  void can_create_boards_for_all_levels(final GameLevel gameLevel)
   {
     //given
-    final var board = Board.easy();
+    final var board = Board.of(gameLevel);
 
     //expect
     assertThat(board)
         .isNotNull();
     assertThat(board.rows())
-        .isEqualTo(GameLevel.EASY.rows);
+        .isEqualTo(gameLevel.rows);
     assertThat(board.columns())
-        .isEqualTo(GameLevel.EASY.columns);
+        .isEqualTo(gameLevel.columns);
     assertThat(board.minesCount())
-        .isEqualTo(GameLevel.EASY.mines);
-  }
-
-  @Test void can_create_intermediate_boards()
-  {
-    //given
-    final var board = Board.intermediate();
-
-    //expect
-    assertThat(board)
-        .isNotNull();
-    assertThat(board.rows())
-        .isEqualTo(GameLevel.INTERMEDIATE.rows);
-    assertThat(board.columns())
-        .isEqualTo(GameLevel.INTERMEDIATE.columns);
-    assertThat(board.minesCount())
-        .isEqualTo(GameLevel.INTERMEDIATE.mines);
-  }
-
-  @Test void can_create_expert_boards()
-  {
-    //given
-    final var board = Board.expert();
-
-    //expect
-    assertThat(board)
-        .isNotNull();
-    assertThat(board.rows())
-        .isEqualTo(GameLevel.EXPERT.rows);
-    assertThat(board.columns())
-        .isEqualTo(GameLevel.EXPERT.columns);
-    assertThat(board.minesCount())
-        .isEqualTo(GameLevel.EXPERT.mines);
+        .isEqualTo(gameLevel.mines);
   }
 
   @Test void can_create_custom_boards()
