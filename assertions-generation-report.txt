@@ -1,0 +1,15 @@
+
+
+====================================
+AssertJ assertions generation report
+====================================
+
+--- Generator input parameters ---
+
+Generating AssertJ assertions for classes:
+- minesweeper.Board
+
+--- Generator results ---
+
+No assertions generated as no classes have been found from given classes/packages.
+- Given classes : [minesweeper.Board]

@@ -48,7 +48,23 @@
     <webjars-bootstrap.version>4.5.3</webjars-bootstrap.version>
     <webjars-jquery-ui.version>1.12.1</webjars-jquery-ui.version>
     <webjars-jquery.version>3.5.1</webjars-jquery.version>
+
+    <junit-jupiter.version>5.7.0</junit-jupiter.version>
+
+    <skipUnitTests>false</skipUnitTests>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- testing -->
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>3.18.1</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -73,6 +89,16 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.junit.vintage</groupId>
+          <artifactId>junit-vintage-engine</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>
@@ -107,6 +133,13 @@
       <artifactId>spring-boot-devtools</artifactId>
       <scope>runtime</scope>
     </dependency>
+
+    <!-- testing -->
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -129,6 +162,25 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0-M5</version>
+        <configuration>
+          <includes>
+            <include>**/*_tests.java</include>
+          </includes>
+          <excludes>
+            <exclude>**/*_specs.java</exclude>
+          </excludes>
+          <argLine>--enable-preview</argLine>
+          <skipTests>${skipUnitTests}</skipTests>
+          <environmentVariables>
+            <ENV>test</ENV>
+          </environmentVariables>
+        </configuration>
       </plugin>
 
       <plugin>

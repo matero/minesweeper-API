@@ -23,8 +23,6 @@
  */
 package minesweeper;
 
-import java.util.Random;
-
 /**
  * A {@link Board} instance represents the cells in a game.
  * <p>
@@ -44,6 +42,27 @@ class Board
     this.cells = cells;
   }
 
+  int rows() {return cells.length;}
+
+  int columns() {return cells[0].length;}
+
+  int minesCount()
+  {
+    final int rows = rows();
+    final int columns = columns();
+    int detectedMines = 0;
+
+    for (int row = 0; row < rows; row++) {
+      for (int column = 0; column < columns; column++) {
+        if (mineAt(cells, row, column)) {
+          detectedMines++;
+        }
+      }
+    }
+
+    return detectedMines;
+  }
+
   int sorroundingMines(final int row, final int column)
   {
     final var cell = get(row, column);
@@ -57,14 +76,14 @@ class Board
     if (row < 0) {
       throw new IllegalArgumentException("row must be 0 or positive");
     }
-    if (row >= cells.length) {
-      throw new IllegalArgumentException("row is too big. This board has " + cells.length + " rows (and this board access is 0..n-1 indexed)");
+    if (row >= rows()) {
+      throw new IllegalArgumentException("row is too big. This board has " + rows() + " rows (and this board access is 0..n-1 indexed)");
     }
     if (column < 0) {
       throw new IllegalArgumentException("column must be 0 or positive");
     }
-    if (column >= cells[0].length) {
-      throw new IllegalArgumentException("row is too big. This board has " + cells[0].length + " column (and this board access is 0..n-1 indexed)");
+    if (column >= columns()) {
+      throw new IllegalArgumentException("row is too big. This board has " + columns() + " column (and this board access is 0..n-1 indexed)");
     }
     return cells[row][column];
   }
@@ -107,7 +126,7 @@ class Board
 
   static void randomlyPlaceMinesAt(final int[][] cells, final int mines)
   {
-    final var r = new Random();
+    final var r = new java.util.Random();
     final int rows = cells.length;
     final int columns = cells[0].length;
     for (int minesToPlace = mines; minesToPlace > 0; ) {
@@ -190,7 +209,7 @@ class Board
 
   static boolean isNotAtFirst(final int n) { return (n - 1) != -1; }
 
-  private enum Level
+  enum Level
   {
     EASY(8, 8, 10),
     INTERMEDIATE(16, 16, 40),
