@@ -17,6 +17,30 @@
   <name>Minesweeper API</name>
   <description>Challenge to evaluate development skills.</description>
 
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <scm>
+    <url>https://github.com/matero/minesweeper-API</url>
+    <connection>scm:git:git@github.com:matero/minesweeper-API.git</connection>
+    <developerConnection>scm:git:git@github.com:matero/minesweeper-API.git</developerConnection>
+  </scm>
+  <url>https://github.com/matero/minesweeper-API</url>
+
+  <developers>
+    <developer>
+      <id>matero</id>
+      <name>Juan José Gil</name>
+      <email>matero@gmail.com</email>
+      <url>https://twitter.com/matero</url>
+    </developer>
+  </developers>
+
   <properties>
     <java.version>15</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
