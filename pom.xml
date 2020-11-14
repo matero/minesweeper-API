@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.3.0.RELEASE</version>
+    <version>2.3.6.RELEASE</version>
     <relativePath/>
   </parent>
 
@@ -21,9 +21,9 @@
     <java.version>15</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <webjars-bootstrap.version>4.1.3</webjars-bootstrap.version>
+    <webjars-bootstrap.version>4.5.3</webjars-bootstrap.version>
     <webjars-jquery-ui.version>1.12.1</webjars-jquery-ui.version>
-    <webjars-jquery.version>3.3.1-1</webjars-jquery.version>
+    <webjars-jquery.version>3.5.1</webjars-jquery.version>
   </properties>
 
   <dependencies>
@@ -106,6 +106,61 @@
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>3.9.1</version>
+      </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <!-- Profile used to check versions of dependencies and plugins -->
+    <profile>
+      <id>checkVersions</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+            <version>3.0.0-M3</version>
+            <executions>
+              <execution>
+                <id>enforce-versions</id>
+                <goals>
+                  <goal>enforce</goal>
+                </goals>
+                <configuration>
+                  <rules>
+                    <requireMavenVersion>
+                      <version>3.6</version>
+                    </requireMavenVersion>
+                    <requireJavaVersion>
+                      <version>14</version>
+                    </requireJavaVersion>
+                  </rules>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>versions-maven-plugin</artifactId>
+            <version>2.8.1</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>display-dependency-updates</goal>
+                  <goal>display-plugin-updates</goal>
+                </goals>
+                <phase>compile</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
