@@ -126,7 +126,7 @@ class Board
 
   static void randomlyPlaceMinesAt(final int[][] cells, final int mines)
   {
-    final var r = new java.util.Random();
+    final var r = java.util.concurrent.ThreadLocalRandom.current();
     final int rows = cells.length;
     final int columns = cells[0].length;
     for (int minesToPlace = mines; minesToPlace > 0; ) {
