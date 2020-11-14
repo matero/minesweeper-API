@@ -1,3 +1,26 @@
+/*
+ The MIT License (MIT)
+
+ Copyright (c) 2020 Juan José GIL - matero@gmail.com
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ */
 package minesweeper;
 
 import java.util.Random;
@@ -11,6 +34,7 @@ import java.util.Random;
 class Board
 {
   private static final int MINE = Integer.MIN_VALUE;
+  private static final int UNKNOWN = 9;
 
   private final int[][] cells;
 
@@ -22,22 +46,13 @@ class Board
 
   int sorroundingMines(final int row, final int column)
   {
-    if (row < 0) {
-      throw new IllegalArgumentException("row must be 0 or positive");
-    }
-    if (row >= cells.length) {
-      throw new IllegalArgumentException("row is too big. This board has " + cells.length + " rows (and this board access is 0..n-1 indexed)");
-    }
-    if (column < 0) {
-      throw new IllegalArgumentException("column must be 0 or positive");
-    }
-    if (column >= cells[0].length) {
-      throw new IllegalArgumentException("row is too big. This board has " + cells[0].length + " column (and this board access is 0..n-1 indexed)");
-    }
-    return (cells[row][column] == MINE)? -1 : cells[row][column];
+    final var cell = get(row, column);
+    return (cell == MINE) ? UNKNOWN : cells[row][column];
   }
 
-  boolean hasMine(final int row, final int column)
+  boolean hasMine(final int row, final int column) { return get(row, column) == MINE; }
+
+  int get(final int row, final int column)
   {
     if (row < 0) {
       throw new IllegalArgumentException("row must be 0 or positive");
@@ -51,7 +66,7 @@ class Board
     if (column >= cells[0].length) {
       throw new IllegalArgumentException("row is too big. This board has " + cells[0].length + " column (and this board access is 0..n-1 indexed)");
     }
-    return cells[row][column] == MINE;
+    return cells[row][column];
   }
 
   static Board easy() { return new Board(createCells(Level.EASY)); }
