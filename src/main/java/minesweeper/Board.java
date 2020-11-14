@@ -29,7 +29,7 @@ package minesweeper;
  * {@link Board} instances are immutable, and knows where the mines are located. They allows to query if a cell has a
  * mine with {@link Board#hasMine(int, int)} and to fetch the amount of mines surrounding a cell with {@link Board#sorroundingMines(int, int)}.
  */
-class Board
+final class Board
 {
   private static final int MINE = Integer.MIN_VALUE;
   private static final int UNKNOWN = 9;
@@ -54,7 +54,7 @@ class Board
 
     for (int row = 0; row < rows; row++) {
       for (int column = 0; column < columns; column++) {
-        if (mineAt(cells, row, column)) {
+        if (cells[row][column] == MINE) {
           detectedMines++;
         }
       }
@@ -88,126 +88,16 @@ class Board
     return cells[row][column];
   }
 
-  static Board easy() { return new Board(createCells(Level.EASY)); }
+  static Board easy() { return new Builder(Level.EASY).randomlyPlaceMines(Level.EASY).build(); }
 
-  static Board intermediate() { return new Board(createCells(Level.INTERMEDIATE)); }
+  static Board intermediate() { return new Builder(Level.INTERMEDIATE).randomlyPlaceMines(Level.INTERMEDIATE).build(); }
 
-  static Board expert() { return new Board(createCells(Level.EXPERT)); }
+  static Board expert() { return new Builder(Level.EXPERT).randomlyPlaceMines(Level.EXPERT).build(); }
 
-  static int[][] createCells(final Level desiredLevel) { return createCells(desiredLevel.rows, desiredLevel.columns, desiredLevel.mines); }
-
-  static Board custom(final int rows, final int columns, final int mines)
+  static Board custom(final int desiredRows, final int desiredColumns, final int desiredMines)
   {
-    if (rows < 1) {
-      throw new IllegalArgumentException("Board must have at least 1 row.");
-    }
-    if (columns < 1) {
-      throw new IllegalArgumentException("Board must have at least 1 column.");
-    }
-    if (mines < 0) {
-      throw new IllegalArgumentException("Board must have 0 or more mines.");
-    }
-
-    final int totalCells = rows * columns;
-    if (mines >= totalCells) {
-      throw new IllegalArgumentException("Board must have less mines than cells.");
-    }
-
-    return new Board(createCells(rows, columns, mines));
+    return new Builder(desiredRows, desiredColumns).randomlyPlaceMines(desiredMines).build();
   }
-
-  static int[][] createCells(final int rows, final int columns, final int mines)
-  {
-    final var board = new int[rows][columns];
-    randomlyPlaceMinesAt(board, mines);
-    calculateSurroundingMinesAt(board);
-    return board;
-  }
-
-  static void randomlyPlaceMinesAt(final int[][] cells, final int mines)
-  {
-    final var r = java.util.concurrent.ThreadLocalRandom.current();
-    final int rows = cells.length;
-    final int columns = cells[0].length;
-    for (int minesToPlace = mines; minesToPlace > 0; ) {
-      final int row = r.nextInt(rows);
-      final int column = r.nextInt(columns);
-      final var cell = cells[row][column];
-
-      if (cell == 0) {
-        cells[row][column] = MINE;
-        minesToPlace--;
-      }
-    }
-  }
-
-  static void calculateSurroundingMinesAt(final int[][] cells)
-  {
-    final int rows = cells.length;
-    final int columns = cells[0].length;
-
-    for (int row = 0; row < rows; row++) {
-      for (int column = 0; column < columns; column++) {
-        if (!mineAt(cells, row, column)) {
-          cells[row][column] = surroundingMinesOf(cells, row, column);
-        }
-      }
-    }
-  }
-
-  private static int surroundingMinesOf(final int[][] cells, final int row, final int column)
-  {
-    final var isNotAtLastRow = (row + 1) != cells.length;
-    final var isNotAtLastColumn = (column + 1) != cells[0].length;
-    int surroundingMines = 0;
-
-    if (isNotAtFirst(column)) {
-      if (mineAt(cells, row, column - 1)) {
-        surroundingMines++;
-      }
-    }
-    if (isNotAtFirst(row)) {
-      if (mineAt(cells, row - 1, column)) {
-        surroundingMines++;
-      }
-    }
-    if (isNotAtFirst(row) && isNotAtFirst(column)) {
-      if (mineAt(cells, row - 1, column - 1)) {
-        surroundingMines++;
-      }
-    }
-    if (isNotAtFirst(row) && isNotAtLastColumn) {
-      if (mineAt(cells, row - 1, column + 1)) {
-        surroundingMines++;
-      }
-    }
-    if (isNotAtLastRow) {
-      if (mineAt(cells, row + 1, column)) {
-        surroundingMines++;
-      }
-    }
-    if (isNotAtLastColumn) {
-      if (mineAt(cells, row, column + 1)) {
-        surroundingMines++;
-      }
-    }
-    if (isNotAtLastRow && isNotAtLastColumn) {
-      if (mineAt(cells, row + 1, column + 1)) {
-        surroundingMines++;
-      }
-    }
-    if (isNotAtLastRow && isNotAtFirst(column)) {
-      if (mineAt(cells, row + 1, column - 1)) {
-        surroundingMines++;
-      }
-    }
-
-    return surroundingMines;
-  }
-
-  static boolean mineAt(final int[][] cells, final int row, final int column) { return cells[row][column] == MINE; }
-
-  static boolean isNotAtFirst(final int n) { return (n - 1) != -1; }
 
   enum Level
   {
@@ -223,5 +113,122 @@ class Board
       this.columns = columns;
       this.mines = mines;
     }
+  }
+
+  static final class Builder
+  {
+    private final int[][] cells;
+    private final int rows;
+    private final int columns;
+
+    Builder(final Level desiredLevel) { this(desiredLevel.rows, desiredLevel.columns); }
+
+    Builder(final int rows, final int columns)
+    {
+      if (rows < 1) {
+        throw new IllegalArgumentException("Board must have at least 1 row.");
+      }
+      if (columns < 1) {
+        throw new IllegalArgumentException("Board must have at least 1 column.");
+      }
+      this.rows = rows;
+      this.columns = columns;
+      this.cells = new int[rows][columns];
+    }
+
+    Board build() { return new Board(cells); }
+
+    Builder randomlyPlaceMines(final Level level) { return randomlyPlaceMines(level.mines); }
+
+    Builder randomlyPlaceMines(final int amount)
+    {
+      if (amount < 0) {
+        throw new IllegalArgumentException("Board must have 0 or more mines.");
+      }
+      final int totalCells = rows * columns;
+      if (amount >= totalCells) {
+        throw new IllegalArgumentException("Board must have less mines than cells.");
+      }
+
+      final var r = java.util.concurrent.ThreadLocalRandom.current();
+      for (int minesToPlace = amount; minesToPlace > 0; ) {
+        final int row = r.nextInt(rows);
+        final int column = r.nextInt(columns);
+        final var cell = cells[row][column];
+
+        if (cell == 0) {
+          cells[row][column] = MINE;
+          minesToPlace--;
+        }
+      }
+
+      return this;
+    }
+
+    Builder calculateSurroundingMines()
+    {
+      for (int row = 0; row < rows; row++) {
+        for (int column = 0; column < columns; column++) {
+          if (!mineAt(row, column)) {
+            cells[row][column] = surroundingMinesOf(row, column);
+          }
+        }
+      }
+      return this;
+    }
+
+    private int surroundingMinesOf(final int row, final int column)
+    {
+      final var isNotAtLastRow = (row + 1) != rows;
+      final var isNotAtLastColumn = (column + 1) != columns;
+      int surroundingMines = 0;
+
+      if (isNotAtFirst(column)) {
+        if (mineAt(row, column - 1)) {
+          surroundingMines++;
+        }
+      }
+      if (isNotAtFirst(row)) {
+        if (mineAt(row - 1, column)) {
+          surroundingMines++;
+        }
+      }
+      if (isNotAtFirst(row) && isNotAtFirst(column)) {
+        if (mineAt(row - 1, column - 1)) {
+          surroundingMines++;
+        }
+      }
+      if (isNotAtFirst(row) && isNotAtLastColumn) {
+        if (mineAt(row - 1, column + 1)) {
+          surroundingMines++;
+        }
+      }
+      if (isNotAtLastRow) {
+        if (mineAt(row + 1, column)) {
+          surroundingMines++;
+        }
+      }
+      if (isNotAtLastColumn) {
+        if (mineAt(row, column + 1)) {
+          surroundingMines++;
+        }
+      }
+      if (isNotAtLastRow && isNotAtLastColumn) {
+        if (mineAt(row + 1, column + 1)) {
+          surroundingMines++;
+        }
+      }
+      if (isNotAtLastRow && isNotAtFirst(column)) {
+        if (mineAt(row + 1, column - 1)) {
+          surroundingMines++;
+        }
+      }
+
+      return surroundingMines;
+    }
+
+    private boolean mineAt(final int row, final int column) { return cells[row][column] == MINE; }
+
+    private boolean isNotAtFirst(final int n) { return (n - 1) != -1; }
   }
 }
