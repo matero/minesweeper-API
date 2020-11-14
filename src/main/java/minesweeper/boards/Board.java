@@ -21,7 +21,9 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package minesweeper;
+package minesweeper.boards;
+
+import minesweeper.games.GameLevel;
 
 /**
  * A {@link Board} instance represents the cells in a game.
@@ -29,7 +31,7 @@ package minesweeper;
  * {@link Board} instances are immutable, and knows where the mines are located. They allows to query if a cell has a
  * mine with {@link Board#hasMine(int, int)} and to fetch the amount of mines surrounding a cell with {@link Board#sorroundingMines(int, int)}.
  */
-final class Board
+public final class Board
 {
   private static final int MINE = Integer.MIN_VALUE;
   private static final int UNKNOWN = 9;
@@ -88,32 +90,20 @@ final class Board
     return cells[row][column];
   }
 
-  static Board easy() { return new Builder(Level.EASY).randomlyPlaceMines(Level.EASY).build(); }
+  static Board easy() { return of(GameLevel.EASY); }
 
-  static Board intermediate() { return new Builder(Level.INTERMEDIATE).randomlyPlaceMines(Level.INTERMEDIATE).build(); }
+  static Board intermediate() { return of(GameLevel.INTERMEDIATE); }
 
-  static Board expert() { return new Builder(Level.EXPERT).randomlyPlaceMines(Level.EXPERT).build(); }
+  static Board expert() { return of(GameLevel.EXPERT); }
 
-  static Board custom(final int desiredRows, final int desiredColumns, final int desiredMines)
+  public static Board of(final GameLevel level) { return custom(level.rows, level.columns, level.mines); }
+
+  public static Board custom(final int desiredRows, final int desiredColumns, final int desiredMines)
   {
     return new Builder(desiredRows, desiredColumns).randomlyPlaceMines(desiredMines).build();
   }
 
-  enum Level
-  {
-    EASY(8, 8, 10),
-    INTERMEDIATE(16, 16, 40),
-    EXPERT(16, 30, 99);
-
-    final int rows, columns, mines;
-
-    Level(final int rows, final int columns, final int mines)
-    {
-      this.rows = rows;
-      this.columns = columns;
-      this.mines = mines;
-    }
-  }
+  public int[][] makeCells() { return cells.clone(); }
 
   static final class Builder
   {
@@ -121,7 +111,7 @@ final class Board
     private final int rows;
     private final int columns;
 
-    Builder(final Level desiredLevel) { this(desiredLevel.rows, desiredLevel.columns); }
+    Builder(final GameLevel desiredLevel) { this(desiredLevel.rows, desiredLevel.columns); }
 
     Builder(final int rows, final int columns)
     {
@@ -138,7 +128,7 @@ final class Board
 
     Board build() { return new Board(cells); }
 
-    Builder randomlyPlaceMines(final Level level) { return randomlyPlaceMines(level.mines); }
+    Builder randomlyPlaceMines(final GameLevel level) { return randomlyPlaceMines(level.mines); }
 
     Builder randomlyPlaceMines(final int amount)
     {

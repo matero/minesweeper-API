@@ -21,8 +21,9 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package minesweeper;
+package minesweeper.boards;
 
+import minesweeper.games.GameLevel;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,11 +39,11 @@ class Board_tests
     assertThat(board)
         .isNotNull();
     assertThat(board.rows())
-        .isEqualTo(Board.Level.EASY.rows);
+        .isEqualTo(GameLevel.EASY.rows);
     assertThat(board.columns())
-        .isEqualTo(Board.Level.EASY.columns);
+        .isEqualTo(GameLevel.EASY.columns);
     assertThat(board.minesCount())
-        .isEqualTo(Board.Level.EASY.mines);
+        .isEqualTo(GameLevel.EASY.mines);
   }
 
   @Test void can_create_intermediate_boards()
@@ -54,11 +55,11 @@ class Board_tests
     assertThat(board)
         .isNotNull();
     assertThat(board.rows())
-        .isEqualTo(Board.Level.INTERMEDIATE.rows);
+        .isEqualTo(GameLevel.INTERMEDIATE.rows);
     assertThat(board.columns())
-        .isEqualTo(Board.Level.INTERMEDIATE.columns);
+        .isEqualTo(GameLevel.INTERMEDIATE.columns);
     assertThat(board.minesCount())
-        .isEqualTo(Board.Level.INTERMEDIATE.mines);
+        .isEqualTo(GameLevel.INTERMEDIATE.mines);
   }
 
   @Test void can_create_expert_boards()
@@ -70,11 +71,11 @@ class Board_tests
     assertThat(board)
         .isNotNull();
     assertThat(board.rows())
-        .isEqualTo(Board.Level.EXPERT.rows);
+        .isEqualTo(GameLevel.EXPERT.rows);
     assertThat(board.columns())
-        .isEqualTo(Board.Level.EXPERT.columns);
+        .isEqualTo(GameLevel.EXPERT.columns);
     assertThat(board.minesCount())
-        .isEqualTo(Board.Level.EXPERT.mines);
+        .isEqualTo(GameLevel.EXPERT.mines);
   }
 
   @Test void can_create_custom_boards()

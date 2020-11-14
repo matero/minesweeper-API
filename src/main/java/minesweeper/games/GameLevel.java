@@ -21,7 +21,22 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package minesweeper;
+package minesweeper.games;
 
-import minesweeper.Board.Level;
+public enum GameLevel
+{
+  EASY(8, 8, 10),
+  INTERMEDIATE(16, 16, 40),
+  EXPERT(16, 30, 99);
 
+  public final int rows;
+  public final int columns;
+  public final int mines;
+
+  GameLevel(final int rows, final int columns, final int mines)
+  {
+    this.rows = rows;
+    this.columns = columns;
+    this.mines = mines;
+  }
+}
