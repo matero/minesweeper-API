@@ -21,30 +21,23 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package minesweeper.games;
+package minesweeper;
 
-import minesweeper.boards.Board;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import javax.validation.constraints.NotNull;
-
-@RestController
-@RequestMapping(path = "/games", produces = "application/json; charset=utf-8")
-class GamesEndPoint
+@Configuration
+public class WebConfig implements WebMvcConfigurer
 {
-  @PostMapping("create/{level}")
-  Game create(@PathVariable final GameLevel level)
-  {
-    return new Game(1, Board.of(level));
-  }
+  private static final long MAX_AGE_SECS = 3600;
 
-  @PostMapping("create/custom")
-  Game create(@RequestParam @NotNull final Integer rows, @RequestParam @NotNull final Integer columns, @RequestParam @NotNull final Integer mines)
+  @Override
+  public void addCorsMappings(final CorsRegistry registry)
   {
-    return new Game(1, Board.custom(rows, columns, mines));
+    registry.addMapping("/**")
+            .allowedOrigins("*")
+            .allowedMethods("HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE")
+            .maxAge(MAX_AGE_SECS);
   }
 }

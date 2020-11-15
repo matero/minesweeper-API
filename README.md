@@ -38,7 +38,12 @@ What we want to see is how well you handle yourself given the time you spend on 
 
 Please email your solution as soon as you have completed the challenge or the time is up.
 
-# From java-getting-started
+# API documentation
+API documented via SpringFox, and its available at [Minesweeper-API Docs](http://matero-mainsweeper.heroku.com/swagger-ui/#) or if you are working locally at then
+ [Development Minesweeper-API Docs](http://localhost:5000/swagger-ui/#)
+:5000.
+ 
+# Starting point: From java-getting-started (heroku sekeleton project)
 
 A barebones Java app, which can easily be deployed to Heroku.
 
