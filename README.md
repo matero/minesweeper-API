@@ -39,7 +39,7 @@ What we want to see is how well you handle yourself given the time you spend on 
 Please email your solution as soon as you have completed the challenge or the time is up.
 
 # API documentation
-API documented via SpringFox, and its available at [Minesweeper-API Docs](http://matero-mainsweeper.heroku.com/swagger-ui/#) or if you are working locally at then
+API documented via SpringFox, and its available at [Minesweeper-API Docs](https://matero-minesweeper.herokuapp.com/swagger-ui/#) or if you are working locally at then
  [Development Minesweeper-API Docs](http://localhost:5000/swagger-ui/#)
 :5000.
  
