@@ -23,18 +23,22 @@
  */
 package minesweeper.games;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @org.springframework.stereotype.Service
-final class Service
+class Service
 {
   private final Repository repository;
 
   Service(final Repository repository) { this.repository = repository; }
 
+  @Transactional
   Game createGameOfLevel(final GameLevel level)
   {
     return createCustomGame(level.rows, level.columns, level.mines);
   }
 
+  @Transactional
   Game createCustomGame(final int rows, final int columns, final int mines)
   {
     final var board = new BoardBuilder(rows, columns)
