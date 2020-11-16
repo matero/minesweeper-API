@@ -32,10 +32,9 @@ import javax.validation.constraints.NotNull;
  */
 final class Game
 {
-  static final int MINE = Integer.MIN_VALUE;
+  static final int MINE = -1;
   static final int UNKNOWN = 9;
-  private static final int HINT = Integer.MAX_VALUE;
-  private static final int CLICKED = -2;
+  private static final int HINT = -2;
 
   @JsonProperty final int id;
   @NotNull private final int[][] board;
