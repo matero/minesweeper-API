@@ -33,8 +33,9 @@ import javax.validation.constraints.NotNull;
 final class Game
 {
   static final int MINE = -1;
-  static final int UNKNOWN = 9;
+  private static final int DISCOVERED_MINE = MINE + 10;
   private static final int HINT = -2;
+  static final int UNKNOWN = -3;
 
   @JsonProperty final int id;
   @NotNull private final int[][] board;
@@ -70,7 +71,27 @@ final class Game
     return board[row][column];
   }
 
-  @JsonProperty int[][] getBoard() { return board.clone(); }
+  @JsonProperty int[][] getBoard()
+  {
+    final var rows = getRows();
+    final var columns = getColumns();
+
+    final var played = new int[rows][];
+    for (int r = 0; r < rows; r++) {
+      played[r] = new int[columns];
+      System.arraycopy(board[r], 0, played[r], 0, columns);
+    }
+
+    if (!hasDiscoveredMine()) {
+      for (int row = 0; row < rows; row++) {
+        for (int column = 0; column < columns; column++) {
+          final var cell = board[row][column];
+          played[row][column] = (cell < DISCOVERED_MINE) ? UNKNOWN : cell;
+        }
+      }
+    }
+    return played;
+  }
 
   @JsonProperty int getRows() { return board.length; }
 
@@ -85,7 +106,8 @@ final class Game
 
     for (int row = 0; row < rows; row++) {
       for (int column = 0; column < columns; column++) {
-        if (board[row][column] == Game.MINE) {
+        final var cell = board[row][column];
+        if (cell == MINE || cell == DISCOVERED_MINE) {
           detectedMines++;
         }
       }
@@ -100,17 +122,33 @@ final class Game
 
   @Override public String toString() { return "Game{id=" + id + '}'; }
 
-  String toAsciiTable()
+  String toAsciiTable() { return toAsciiTable(hasDiscoveredMine()); }
+
+  private boolean hasDiscoveredMine()
+  {
+    final var columns = getColumns();
+    final var rows = getRows();
+    for (int row = 0; row < rows; row++) {
+      for (int column = 0; column < columns; column++) {
+        if (board[row][column] == DISCOVERED_MINE) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  String toAsciiTable(final boolean showBoard)
   {
     final var columns = getColumns();
     final var rows = getRows();
     final var table = new StringBuilder(((2 * rows) - 1) * ((2 * columns) - 1));
 
     final var rowSeparator = buildRowSeparatorUsing(columns);
-    addRowTo(table, 0, columns);
+    addRowTo(table, 0, columns, showBoard);
     for (int row = 1; row < rows; row++) {
       table.append(rowSeparator);
-      addRowTo(table, row, columns);
+      addRowTo(table, row, columns, showBoard);
     }
     return table.toString();
   }
@@ -130,30 +168,49 @@ final class Game
     return separator;
   }
 
-  private void addRowTo(final StringBuilder table, final int row, final int columns)
+  private void addRowTo(final StringBuilder table, final int row, final int columns, final boolean show)
   {
-    table.append(cellDescription(row, 0));
+    table.append(cellDescription(row, 0, show));
     for (int column = 1; column < columns; column++) {
-      table.append('|').append(cellDescription(row, column));
+      table.append('|').append(cellDescription(row, column, show));
     }
     table.append('\n');
   }
 
-  private char cellDescription(final int row, final int column)
+  private char cellDescription(final int row, final int column, final boolean show)
   {
     final int cell = board[row][column];
-    return switch (cell) {
-      case 0 -> ' ';
-      case MINE -> '*';
-      case 1 -> '1';
-      case 2 -> '2';
-      case 3 -> '3';
-      case 4 -> '4';
-      case 5 -> '5';
-      case 6 -> '6';
-      case 7 -> '7';
-      case 8 -> '8';
-      default -> throw new IllegalStateException("unexpected cell content: " + cell);
-    };
+    if (show) {
+      return switch (cell) {
+        case MINE, DISCOVERED_MINE -> '*';
+        case 0, 10 -> ' ';
+        case 1, 11 -> '1';
+        case 2, 12 -> '2';
+        case 3, 13 -> '3';
+        case 4, 14 -> '4';
+        case 5, 15 -> '5';
+        case 6, 16 -> '6';
+        case 7, 17 -> '7';
+        case 8, 18 -> '8';
+        default -> throw new IllegalStateException("unexpected cell content: " + cell);
+      };
+    } else {
+      if (cell < DISCOVERED_MINE) {
+        return '#';
+      }
+      return switch (cell) {
+        case DISCOVERED_MINE -> '*';
+        case 10 -> ' ';
+        case 11 -> '1';
+        case 12 -> '2';
+        case 13 -> '3';
+        case 14 -> '4';
+        case 15 -> '5';
+        case 16 -> '6';
+        case 17 -> '7';
+        case 18 -> '8';
+        default -> throw new IllegalStateException("unexpected cell content: " + cell);
+      };
+    }
   }
 }

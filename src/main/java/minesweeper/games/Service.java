@@ -53,6 +53,8 @@ class Service
     final var game = new Game(assignedId, board);
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Game#" + assignedId + " created, with board:\n\n" + game.toAsciiTable());
+
+      LOGGER.debug("\nGame#" + assignedId + " created, with board:\n\n" + game.toAsciiTable(true));
     }
     return game;
   }
