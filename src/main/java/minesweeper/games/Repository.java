@@ -23,39 +23,46 @@
  */
 package minesweeper.games;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
 import java.sql.Types;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 @org.springframework.stereotype.Repository
 class Repository
 {
   private static final List<SqlParameter> BOARD_PARAMETER = List.of(new SqlParameter(Types.ARRAY, "board"));
-  private final JdbcTemplate db;
 
-  Repository(final JdbcTemplate db) { this.db = db; }
+  private final JdbcTemplate db;
+  private final PreparedStatementCreatorFactory insertIntoGames;
+
+  @Autowired Repository(final JdbcTemplate db) { this(db, makeInsertIntoGames()); }
+
+  Repository(final JdbcTemplate db, final PreparedStatementCreatorFactory insertIntoGames)
+  {
+    this.db = db;
+    this.insertIntoGames = insertIntoGames;
+  }
 
   int createGameWith(final int[][] board)
   {
     final var gameId = new GeneratedKeyHolder();
-    final var pscf = new PreparedStatementCreatorFactory("INSERT INTO minesweeper.Games(board) VALUES (?)", BOARD_PARAMETER)
-    {
-      {
-        setReturnGeneratedKeys(true);
-        setGeneratedKeysColumnNames("id");
-      }
-    };
-    final var arg = new Object[]{board};
-    final var psc = pscf.newPreparedStatementCreator(arg);
+    final var psc = insertIntoGames.newPreparedStatementCreator(Collections.singletonList(board));
     db.update(psc, gameId);
+    return gameId.getKey().intValue();
+  }
 
-    final var id = Objects.requireNonNull(gameId.getKey()).intValue();
-
-    return id;
+  private static PreparedStatementCreatorFactory makeInsertIntoGames()
+  {
+    final PreparedStatementCreatorFactory insertIntoGames;
+    insertIntoGames = new PreparedStatementCreatorFactory("INSERT INTO minesweeper.Games(board) VALUES (?)", BOARD_PARAMETER);
+    insertIntoGames.setReturnGeneratedKeys(true);
+    insertIntoGames.setGeneratedKeysColumnNames("id");
+    return insertIntoGames;
   }
 }
