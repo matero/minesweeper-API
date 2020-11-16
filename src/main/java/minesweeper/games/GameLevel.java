@@ -23,7 +23,7 @@
  */
 package minesweeper.games;
 
-public enum GameLevel
+enum GameLevel
 {
   EASY(8, 8, 10),
   INTERMEDIATE(16, 16, 40),

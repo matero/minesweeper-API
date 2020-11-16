@@ -23,22 +23,76 @@
  */
 package minesweeper.games;
 
-import minesweeper.boards.Board;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import javax.validation.constraints.NotNull;
+
+/**
+ * They allows to query if a cell has a mine with {@link #hasMine(int, int)} and to fetch the amount of mines surrounding a cell with {@link #sorroundingMines(int, int)}
+ */
 final class Game
 {
+  static final int MINE = Integer.MIN_VALUE;
+  static final int UNKNOWN = 9;
   private static final int HINT = Integer.MAX_VALUE;
   private static final int CLICKED = -2;
 
-  private final int id;
-  private final int[][] cells;
-  private final Board board;
+  @JsonProperty final int id;
+  @NotNull private final int[][] board;
 
-  Game(final int id, final Board board)
+  Game(final int id, final int[][] board)
   {
     this.id = id;
     this.board = board;
-    this.cells = board.makeCells();
+  }
+
+  int sorroundingMines(final int row, final int column)
+  {
+    final var cell = get(row, column);
+    return (cell == MINE) ? UNKNOWN : cell;
+  }
+
+  boolean hasMine(final int row, final int column) { return get(row, column) == MINE; }
+
+  int get(final int row, final int column)
+  {
+    if (row < 0) {
+      throw new IllegalArgumentException("row must be 0 or positive");
+    }
+    if (row >= getRows()) {
+      throw new IllegalArgumentException("row is too big. This game has " + getRows() + " rows (and this board access is 0..n-1 indexed)");
+    }
+    if (column < 0) {
+      throw new IllegalArgumentException("column must be 0 or positive");
+    }
+    if (column >= getColumns()) {
+      throw new IllegalArgumentException("row is too big. This game has " + getColumns() + " column (and this board access is 0..n-1 indexed)");
+    }
+    return board[row][column];
+  }
+
+  @JsonProperty int[][] getBoard() { return board.clone(); }
+
+  @JsonProperty int getRows() { return board.length; }
+
+  @JsonProperty int getColumns() { return board[0].length; }
+
+  @JsonProperty int getMinesCount()
+  {
+    final int rows = getRows();
+    final int columns = getColumns();
+
+    int detectedMines = 0;
+
+    for (int row = 0; row < rows; row++) {
+      for (int column = 0; column < columns; column++) {
+        if (board[row][column] == Game.MINE) {
+          detectedMines++;
+        }
+      }
+    }
+
+    return detectedMines;
   }
 
   @Override public boolean equals(final Object o) { return (this == o) || (o instanceof Game that && id == that.id); }

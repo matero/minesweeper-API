@@ -23,31 +23,25 @@
  */
 package minesweeper.games;
 
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import javax.validation.constraints.NotNull;
-
-@RestController
-@RequestMapping(path = "/games", produces = "application/json; charset=utf-8")
-class GamesEndPoint
+@org.springframework.stereotype.Service
+final class Service
 {
-  private final Service service;
+  private final Repository repository;
 
-  GamesEndPoint(final Service service) { this.service = service; }
+  Service(final Repository repository) { this.repository = repository; }
 
-  @PostMapping("create/{level}")
-  Game create(@PathVariable final GameLevel level)
+  Game createGameOfLevel(final GameLevel level)
   {
-    return service.createGameOfLevel(level);
+    return createCustomGame(level.rows, level.columns, level.mines);
   }
 
-  @PostMapping("create/custom")
-  Game create(@RequestParam @NotNull final Integer rows, @RequestParam @NotNull final Integer columns, @RequestParam @NotNull final Integer mines)
+  Game createCustomGame(final int rows, final int columns, final int mines)
   {
-    return service.createCustomGame(rows, columns, mines);
+    final var board = new BoardBuilder(rows, columns)
+                          .randomlyPlaceMines(mines)
+                          .calculateSurroundingMines()
+                          .build();
+    final int assignedId = repository.createGameWith(board);
+    return new Game(assignedId, board);
   }
 }

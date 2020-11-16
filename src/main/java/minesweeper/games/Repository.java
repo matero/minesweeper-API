@@ -23,31 +23,17 @@
  */
 package minesweeper.games;
 
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.jdbc.core.JdbcTemplate;
 
-import javax.validation.constraints.NotNull;
-
-@RestController
-@RequestMapping(path = "/games", produces = "application/json; charset=utf-8")
-class GamesEndPoint
+@org.springframework.stereotype.Repository
+class Repository
 {
-  private final Service service;
+  private final JdbcTemplate db;
 
-  GamesEndPoint(final Service service) { this.service = service; }
+  Repository(final JdbcTemplate db) { this.db = db; }
 
-  @PostMapping("create/{level}")
-  Game create(@PathVariable final GameLevel level)
+  int createGameWith(final int[][] board)
   {
-    return service.createGameOfLevel(level);
-  }
-
-  @PostMapping("create/custom")
-  Game create(@RequestParam @NotNull final Integer rows, @RequestParam @NotNull final Integer columns, @RequestParam @NotNull final Integer mines)
-  {
-    return service.createCustomGame(rows, columns, mines);
+    return 0;
   }
 }
