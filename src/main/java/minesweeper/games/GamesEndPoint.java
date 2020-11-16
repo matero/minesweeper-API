@@ -23,6 +23,7 @@
  */
 package minesweeper.games;
 
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,7 +31,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 
+@Validated
 @RestController
 @RequestMapping(path = "/games", produces = "application/json; charset=utf-8")
 class GamesEndPoint
@@ -46,7 +49,10 @@ class GamesEndPoint
   }
 
   @PostMapping("create/custom")
-  Game create(@RequestParam @NotNull final Integer rows, @RequestParam @NotNull final Integer columns, @RequestParam @NotNull final Integer mines)
+  Game create(
+      @RequestParam @NotNull @Positive final Integer rows,
+      @RequestParam @NotNull @Positive final Integer columns,
+      @RequestParam @NotNull @Positive final Integer mines)
   {
     return service.createCustomGame(rows, columns, mines);
   }
