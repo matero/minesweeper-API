@@ -99,4 +99,61 @@ final class Game
   @Override public int hashCode() { return Integer.hashCode(id); }
 
   @Override public String toString() { return "Game{id=" + id + '}'; }
+
+  String toAsciiTable()
+  {
+    final var columns = getColumns();
+    final var rows = getRows();
+    final var table = new StringBuilder(((2 * rows) - 1) * ((2 * columns) - 1));
+
+    final var rowSeparator = buildRowSeparatorUsing(columns);
+    addRowTo(table, 0, columns);
+    for (int row = 1; row < rows; row++) {
+      table.append(rowSeparator);
+      addRowTo(table, row, columns);
+    }
+    return table.toString();
+  }
+
+  private char[] buildRowSeparatorUsing(final int columns)
+  {
+    final int length = 2 * columns;
+    final var separator = new char[length];
+    separator[0] = '-';
+    int i = 0;
+    while (i < (length - 2)) {
+      separator[++i] = '+';
+      separator[++i] = '-';
+    }
+    separator[++i] = '-';
+    separator[i] = '\n';
+    return separator;
+  }
+
+  private void addRowTo(final StringBuilder table, final int row, final int columns)
+  {
+    table.append(cellDescription(row, 0));
+    for (int column = 1; column < columns; column++) {
+      table.append('|').append(cellDescription(row, column));
+    }
+    table.append('\n');
+  }
+
+  private char cellDescription(final int row, final int column)
+  {
+    final int cell = board[row][column];
+    return switch (cell) {
+      case 0 -> ' ';
+      case MINE -> '*';
+      case 1 -> '1';
+      case 2 -> '2';
+      case 3 -> '3';
+      case 4 -> '4';
+      case 5 -> '5';
+      case 6 -> '6';
+      case 7 -> '7';
+      case 8 -> '8';
+      default -> throw new IllegalStateException("unexpected cell content: " + cell);
+    };
+  }
 }

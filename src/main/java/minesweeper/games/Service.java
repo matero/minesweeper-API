@@ -23,11 +23,15 @@
  */
 package minesweeper.games;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 @org.springframework.stereotype.Service
 class Service
 {
+  private static final Logger LOGGER = LoggerFactory.getLogger(Service.class);
+
   private final Repository repository;
 
   Service(final Repository repository) { this.repository = repository; }
@@ -46,6 +50,10 @@ class Service
                           .calculateSurroundingMines()
                           .build();
     final int assignedId = repository.createGameWith(board);
-    return new Game(assignedId, board);
+    final var game = new Game(assignedId, board);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Game#" + assignedId + " created, with board:\n\n" + game.toAsciiTable());
+    }
+    return game;
   }
 }
