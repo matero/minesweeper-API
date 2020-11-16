@@ -24,16 +24,38 @@
 package minesweeper.games;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+
+import java.sql.Types;
+import java.util.List;
+import java.util.Objects;
 
 @org.springframework.stereotype.Repository
 class Repository
 {
+  private static final List<SqlParameter> BOARD_PARAMETER = List.of(new SqlParameter(Types.ARRAY, "board"));
   private final JdbcTemplate db;
 
   Repository(final JdbcTemplate db) { this.db = db; }
 
   int createGameWith(final int[][] board)
   {
-    return 0;
+    final var gameId = new GeneratedKeyHolder();
+    final var pscf = new PreparedStatementCreatorFactory("INSERT INTO minesweeper.Games(board) VALUES (?)", BOARD_PARAMETER)
+    {
+      {
+        setReturnGeneratedKeys(true);
+        setGeneratedKeysColumnNames("id");
+      }
+    };
+    final var arg = new Object[]{board};
+    final var psc = pscf.newPreparedStatementCreator(arg);
+    db.update(psc, gameId);
+
+    final var id = Objects.requireNonNull(gameId.getKey()).intValue();
+
+    return id;
   }
 }

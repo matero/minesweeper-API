@@ -21,6 +21,12 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-CREATE SCHEMA IF NOT EXISTS minesweeper AUTHORIZATION ${flyway:user};
+CREATE TABLE minesweeper.Games
+(
+    id    SERIAL PRIMARY KEY,
+    board integer[][] NOT NULL
+);
 
-COMMENT ON SCHEMA minesweeper IS $$Schema to hold _ALL_ **minesweeper** definitions (`tables`, `views`, `stored procedure`, etc.).$$;
+COMMENT ON TABLE minesweeper.Games IS $$Games played or being, by now they only have a unique ID and the board definition$$;
+COMMENT ON COLUMN minesweeper.Games.id IS $$unique ID of the game$$;
+COMMENT ON COLUMN minesweeper.Games.board IS $$cells defined for the game's board$$;
