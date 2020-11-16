@@ -25,8 +25,10 @@ package minesweeper;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
+@Import(springfox.bean.validators.configuration.BeanValidatorPluginsConfiguration.class)
 public class Main
 {
   public static void main(final String[] args)

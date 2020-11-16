@@ -23,6 +23,8 @@
  */
 package minesweeper.games;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,17 +44,33 @@ class GamesEndPoint
 
   GamesEndPoint(final Service service) { this.service = service; }
 
+  /**
+   * Creates a {@link Game} for desired level.
+   *
+   * @param level {@link GameLevel} of the {@link Game} to create.
+   * @return a newly created {@link Game}, with all its cells marked as {@link Game#UNKNOWN}.
+   */
+  @ApiOperation(value = "Creates a Game for desired level.")
   @PostMapping("create/{level}")
-  Game create(@PathVariable final GameLevel level)
+  Game create(@ApiParam(value = "level of the Game to create.", required = true, readOnly = true) @PathVariable final GameLevel level)
   {
     return service.createGameOfLevel(level);
   }
 
+  /**
+   * Creates a {@link Game} with custom configuration.
+   *
+   * @param rows    rows of the {@link Game}'s board.
+   * @param columns columns of the {@link Game}'s board.
+   * @param mines   mines in the {@link Game}'s board.
+   * @return a newly created {@link Game}, with all its cells marked as {@link Game#UNKNOWN}.
+   */
+  @ApiOperation(value = "Creates a Game with custom configuration.")
   @PostMapping("create/custom")
   Game create(
-      @RequestParam @NotNull @Positive final Integer rows,
-      @RequestParam @NotNull @Positive final Integer columns,
-      @RequestParam @NotNull @Positive final Integer mines)
+      @ApiParam(value = "rows of the Game's board.", readOnly = true) @RequestParam @NotNull @Positive final Integer rows,
+      @ApiParam(value = "columns of the Game's board.", readOnly = true) @RequestParam @NotNull @Positive final Integer columns,
+      @ApiParam(value = "mines in the Game's board.", readOnly = true) @RequestParam @NotNull @Positive final Integer mines)
   {
     return service.createCustomGame(rows, columns, mines);
   }
