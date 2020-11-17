@@ -27,6 +27,6 @@ public class AlreadyFinished extends MinesweeperException
 {
   AlreadyFinished(final Game game)
   {
-    super("Game#" + game.id + " has finished at '" + game.finishedAt + "' as '" + game.status + "', it can not be modified anymore.");
+    super("Game#" + game.id + " has finished at '" + game.finishedAt + "' as '" + game.status + "'.");
   }
 }

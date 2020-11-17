@@ -23,7 +23,9 @@
  */
 package minesweeper;
 
-public class NotFound extends RuntimeException
+import minesweeper.games.MinesweeperException;
+
+public final class NotFound extends MinesweeperException
 {
-  public NotFound(final String s) {}
+  public NotFound(final String message) { super(message); }
 }
