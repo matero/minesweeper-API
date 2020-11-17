@@ -23,6 +23,7 @@
  */
 package minesweeper.games;
 
+import minesweeper.NotFound;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
@@ -35,6 +36,7 @@ import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @org.springframework.stereotype.Repository
 class Repository
@@ -55,7 +57,7 @@ class Repository
   Game findById(final int gameId)
   {
     final Object[] id = {gameId};
-    return db.queryForObject("SELECT status, startedAt, finishedAt, board FROM minesweeper.Games WHERE id=?", id, (rs, rowNum) -> {
+    final var game = db.query("SELECT status, startedAt, finishedAt, board FROM minesweeper.Games WHERE id=?", id, (rs, rowNum) -> {
       final var status = readStatus(rs.getString(1));
       final var startedAt = rs.getObject(2, LocalDateTime.class);
       final var finishedAt = rs.getObject(3, LocalDateTime.class);
@@ -63,6 +65,10 @@ class Repository
 
       return new Game(gameId, status, startedAt, finishedAt, board.clone());
     });
+    if (game.isEmpty()) {
+      throw new NotFound("No Game is defined with id=" + gameId);
+    }
+    return game.get(0);
   }
 
   List<Game> findAll()
@@ -93,7 +99,7 @@ class Repository
               SET status=?, startedAt=?, finishedAt=?, board=?
               WHERE id=?
               """,
-              game.status, game.startedAt, game.finishedAt, game.board, game.id);
+              game.status.name(), game.startedAt, game.finishedAt, game.board, game.id);
   }
 
   private static PreparedStatementCreatorFactory makeInsertIntoGames()
@@ -123,9 +129,34 @@ class Repository
       throw new IllegalStateException("fetched null board from DB.");
     }
     try {
-      return (int[][]) array.getArray();
+      return asIntMatrix(array.getArray());
     } finally {
       array.free();
     }
+  }
+
+  private int[][] asIntMatrix(final Object value)
+  {
+    if (value == null) {
+      throw new IllegalStateException("fetched null board from DB.");
+    }
+    if (value instanceof int[][] cells) {
+      return cells;
+    }
+    if (value instanceof Integer[][] cells) {
+      final var rows = cells.length;
+      final var columns = cells[0].length;
+      final var board = new int[cells.length][];
+
+      for (int row = 0; row < rows; row++) {
+        board[row] = new int[columns];
+        for (int column = 0; column < columns; column++) {
+          final var cell = Objects.requireNonNull(cells[row][column], "cells[" + row + "][" + column + "] fetched from DB is null, it shouldn't.");
+          board[row][column] = cell;
+        }
+      }
+      return board;
+    }
+    throw new IllegalStateException("uninterpretable board cells of type '" + value.getClass().getCanonicalName() + "'.");
   }
 }

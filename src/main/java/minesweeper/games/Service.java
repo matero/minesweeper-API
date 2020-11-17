@@ -23,7 +23,6 @@
  */
 package minesweeper.games;
 
-import minesweeper.NotFound;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,9 +62,6 @@ class Service
   @Transactional Game reveal(final int gameId, final int row, final int column)
   {
     final var game = repository.findById(gameId);
-    if (game == null) {
-      throw new NotFound("No Game is defined with id=" + gameId);
-    }
     if (game.isFinished()) {
       throw new AlreadyFinished(game);
     }
