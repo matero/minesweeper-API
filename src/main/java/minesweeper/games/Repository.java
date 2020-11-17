@@ -65,6 +65,19 @@ class Repository
     });
   }
 
+  List<Game> findAll()
+  {
+    return db.query("SELECT id, status, startedAt, finishedAt, board FROM minesweeper.Games", (rs, rowNum) -> {
+      final var id = rs.getInt(1);
+      final var status = readStatus(rs.getString(2));
+      final var startedAt = rs.getObject(3, LocalDateTime.class);
+      final var finishedAt = rs.getObject(4, LocalDateTime.class);
+      final var board = readBoard(rs.getArray(5));
+
+      return new Game(id, status, startedAt, finishedAt, board.clone());
+    });
+  }
+
   int createGameWith(final int[][] board)
   {
     final var gameId = new GeneratedKeyHolder();
@@ -109,6 +122,10 @@ class Repository
     if (array == null) {
       throw new IllegalStateException("fetched null board from DB.");
     }
-    return (int[][]) array.getArray();
+    try {
+      return (int[][]) array.getArray();
+    } finally {
+      array.free();
+    }
   }
 }

@@ -26,6 +26,7 @@ package minesweeper.games;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
+import java.util.List;
 
 @Validated
 @RestController
@@ -46,12 +48,24 @@ class GamesEndPoint
   GamesEndPoint(final Service service) { this.service = service; }
 
   /**
+   * Gets all the {@link Game}s (being?) played.
+   *
+   * @return the list of known {@link Game}s, sorted by start time.
+   */
+  @ApiOperation("Gets all the {@link Game}s (being?) played, sorted by start time.")
+  @GetMapping
+  List<Game> index()
+  {
+    return service.findAll();
+  }
+
+  /**
    * Creates a {@link Game} for desired level.
    *
    * @param level {@link GameLevel} of the {@link Game} to create.
    * @return a newly created {@link Game}, with all its cells obfuscated.
    */
-  @ApiOperation(value = "Creates a Game for desired level.")
+  @ApiOperation("Creates a Game for desired level.")
   @PostMapping("create/{level}")
   Game create(@ApiParam(value = "level of the Game to create.", required = true, readOnly = true) @PathVariable final GameLevel level)
   {
@@ -66,7 +80,7 @@ class GamesEndPoint
    * @param mines   mines in the {@link Game}'s board.
    * @return a newly created {@link Game}, with all its cells obfuscated.
    */
-  @ApiOperation(value = "Creates a Game with custom configuration.")
+  @ApiOperation("Creates a Game with custom configuration.")
   @PostMapping("create/custom")
   Game create(
       @ApiParam(value = "rows of the Game's board.", readOnly = true) @RequestParam @NotNull @Positive final Integer rows,
@@ -84,12 +98,12 @@ class GamesEndPoint
    * @param column column of the {@link Game}'s board's cell to reveal.
    * @return {@link Game}, cell revealed. If it was a mine game is marked as FINISHED.
    */
-  @ApiOperation(value = """
-                        Reveals a Game's board cell.
-                                                
-                        If the game wasn't started at the time, then it is marked as PLAYING.
-                        If the cell was already revealed, nothing happens.
-                        """)
+  @ApiOperation("""
+                Reveals a Game's board cell.
+                                        
+                If the game wasn't started at the time, then it is marked as PLAYING.
+                If the cell was already revealed, nothing happens.
+                """)
   @PutMapping("{gameId}/reveal/{row}/{column}")
   Game reveal(
       @ApiParam(value = "gameId of the game on which the cell must be revealed.", readOnly = true) @Positive @PathVariable final int gameId,

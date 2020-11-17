@@ -28,6 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @org.springframework.stereotype.Service
 class Service
 {
@@ -37,14 +39,12 @@ class Service
 
   Service(final Repository repository) { this.repository = repository; }
 
-  @Transactional
-  Game createGameOfLevel(final GameLevel level)
+  @Transactional Game createGameOfLevel(final GameLevel level)
   {
     return createCustomGame(level.rows, level.columns, level.mines);
   }
 
-  @Transactional
-  Game createCustomGame(final int rows, final int columns, final int mines)
+  @Transactional Game createCustomGame(final int rows, final int columns, final int mines)
   {
     final var board = new BoardBuilder(rows, columns)
                           .randomlyPlaceMines(mines)
@@ -60,7 +60,7 @@ class Service
     return game;
   }
 
-  Game reveal(final int gameId, final int row, final int column)
+  @Transactional Game reveal(final int gameId, final int row, final int column)
   {
     final var game = repository.findById(gameId);
     if (game == null) {
@@ -80,4 +80,9 @@ class Service
   }
 
   private boolean noChangeWasPerformedIn(final Game game) { return game == Game.WITHOUT_CHANGES; }
+
+  @Transactional(readOnly = true) List<Game> findAll()
+  {
+    return repository.findAll();
+  }
 }
