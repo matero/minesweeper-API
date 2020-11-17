@@ -135,5 +135,5 @@ final class BoardBuilder
 
   private boolean mineAt(final int row, final int column) { return cells[row][column] == Game.MINE; }
 
-  private boolean isNotAtFirst(final int n) { return n == 0; }
+  private boolean isNotAtFirst(final int n) { return n != 0; }
 }

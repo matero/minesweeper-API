@@ -348,7 +348,7 @@ final class Game
     return cell == 0 || cell == 10;
   }
 
-  private boolean isNotAtFirst(final int n) { return n == 0; }
+  private boolean isNotAtFirst(final int n) { return n != 0; }
 
   private int[][] cloneBoard()
   {
