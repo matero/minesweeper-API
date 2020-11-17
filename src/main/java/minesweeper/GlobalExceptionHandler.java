@@ -23,6 +23,7 @@
  */
 package minesweeper;
 
+import minesweeper.games.AlreadyFinished;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -118,6 +119,18 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler
     final var body = Map.of("errors", errors);
 
     return new ResponseEntity<>(body, headers, status);
+  }
+
+  @ExceptionHandler(NotFound.class) @ResponseStatus(HttpStatus.NOT_FOUND) @ResponseBody @NonNull
+  Map<String, Object> onNotFound(final NotFound e)
+  {
+    return Map.of("errors", e.getMessage());
+  }
+
+  @ExceptionHandler(AlreadyFinished.class) @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY) @ResponseBody @NonNull
+  Map<String, Object> onAlreadyFinished(final AlreadyFinished e)
+  {
+    return Map.of("errors", e.getMessage());
   }
 }
 

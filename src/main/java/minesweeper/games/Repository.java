@@ -29,7 +29,10 @@ import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
+import java.sql.Array;
+import java.sql.SQLException;
 import java.sql.Types;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,12 +52,35 @@ class Repository
     this.insertIntoGames = insertIntoGames;
   }
 
+  Game findById(final int gameId)
+  {
+    final Object[] id = {gameId};
+    return db.queryForObject("SELECT status, startedAt, finishedAt, board FROM minesweeper.Games WHERE id=?", id, (rs, rowNum) -> {
+      final var status = readStatus(rs.getString(1));
+      final var startedAt = rs.getObject(2, LocalDateTime.class);
+      final var finishedAt = rs.getObject(3, LocalDateTime.class);
+      final var board = readBoard(rs.getArray(4));
+
+      return new Game(gameId, status, startedAt, finishedAt, board.clone());
+    });
+  }
+
   int createGameWith(final int[][] board)
   {
     final var gameId = new GeneratedKeyHolder();
     final var psc = insertIntoGames.newPreparedStatementCreator(Collections.singletonList(board));
     db.update(psc, gameId);
     return gameId.getKey().intValue();
+  }
+
+  void update(final Game game)
+  {
+    db.update("""
+              UPDATE minesweeper.Games
+              SET status=?, startedAt=?, finishedAt=?, board=?
+              WHERE id=?
+              """,
+              game.status, game.startedAt, game.finishedAt, game.board, game.id);
   }
 
   private static PreparedStatementCreatorFactory makeInsertIntoGames()
@@ -64,5 +90,25 @@ class Repository
     insertIntoGames.setReturnGeneratedKeys(true);
     insertIntoGames.setGeneratedKeysColumnNames("id");
     return insertIntoGames;
+  }
+
+  private GameStatus readStatus(final String status)
+  {
+    if (status == null) {
+      throw new IllegalStateException("fetched null status from DB.");
+    }
+    try {
+      return GameStatus.valueOf(status);
+    } catch (final IllegalArgumentException unknown) {
+      throw new IllegalStateException("Game status at DB is unknown. Value fetched: '" + status + "'.");
+    }
+  }
+
+  private int[][] readBoard(final Array array) throws SQLException
+  {
+    if (array == null) {
+      throw new IllegalStateException("fetched null board from DB.");
+    }
+    return (int[][]) array.getArray();
   }
 }

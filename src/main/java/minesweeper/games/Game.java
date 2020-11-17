@@ -23,26 +23,30 @@
  */
 package minesweeper.games;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 
-/**
- * They allows to query if a cell has a mine with {@link #hasMine(int, int)} and to fetch the amount of mines surrounding a cell with {@link #sorroundingMines(int, int)}
- */
 final class Game
 {
   //
   // will avoid bitwise logic to make code clearer
   //
+  static final Game WITHOUT_CHANGES = null;
   static final int MINE = 9;
+  private static final int MARKED_MINE = MINE + 10;
+  static final LocalDateTime NOT_STARTED = null;
+  static final LocalDateTime NOT_FINISHED = null;
 
-  private static final int UNKNOWN = 12;
-  private static final int DISCOVERED_MINE = -10;
   private static final char UNDISCOVERED = '#';
   private static final char MARK = '?';
 
   @JsonProperty final int id;
+  @JsonProperty final GameStatus status;
+  @JsonProperty final LocalDateTime startedAt;
+  @JsonProperty final LocalDateTime finishedAt;
 
   // undiscovered values: all of them represented as '#'
   //   0 (cell with no adjacent mines)
@@ -68,21 +72,16 @@ final class Game
   //   19 MINE
   //
   // on creation ALL values are between 0..9 -> no cell is known
-  @NotNull private final int[][] board;
+  @NotNull @JsonIgnore final int[][] board;
 
-  Game(final int id, final int[][] board)
+  Game(final int id, final GameStatus status, final LocalDateTime startedAt, final LocalDateTime finishedAt, final int[][] board)
   {
     this.id = id;
+    this.status = status;
+    this.startedAt = startedAt;
+    this.finishedAt = finishedAt;
     this.board = board;
   }
-
-  int sorroundingMines(final int row, final int column)
-  {
-    final var cell = get(row, column);
-    return (cell == MINE) ? UNKNOWN : cell;
-  }
-
-  boolean hasMine(final int row, final int column) { return get(row, column) == MINE; }
 
   int get(final int row, final int column)
   {
@@ -103,21 +102,7 @@ final class Game
 
   @JsonProperty char[][] getBoard()
   {
-    return hasDiscoveredMine() ? buildBoard(Game::showCell) : buildBoard(Game::translateCell);
-  }
-
-  private boolean hasDiscoveredMine()
-  {
-    final var columns = getColumns();
-    final var rows = getRows();
-    for (int row = 0; row < rows; row++) {
-      for (int column = 0; column < columns; column++) {
-        if (board[row][column] == DISCOVERED_MINE) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return isFinished() ? buildBoard(Game::showCell) : buildBoard(Game::translateCell);
   }
 
   char[][] buildBoard(final IntToCharFunction cellTranslator)
@@ -148,7 +133,6 @@ final class Game
       case -7 -> '6';
       case -8 -> '7';
       case -9 -> '8';
-      case DISCOVERED_MINE -> '*';
       case 0, 1, 2, 3, 4, 5, 6, 7, 8, MINE -> UNDISCOVERED;
       case 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 -> MARK;
       default -> throw new IllegalStateException("unexpected cell value: " + cell);
@@ -167,7 +151,7 @@ final class Game
       case 6, -7, 16 -> '6';
       case 7, -8, 17 -> '7';
       case 8, -9, 18 -> '8';
-      case MINE, DISCOVERED_MINE, 19 -> '*';
+      case MINE, 19 -> '*';
       default -> throw new IllegalStateException("unexpected cell value: " + cell);
     };
   }
@@ -186,7 +170,7 @@ final class Game
     for (int row = 0; row < rows; row++) {
       for (int column = 0; column < columns; column++) {
         final var cell = board[row][column];
-        if (cell == MINE || cell == DISCOVERED_MINE) {
+        if (hasMine(cell)) {
           detectedMines++;
         }
       }
@@ -195,13 +179,20 @@ final class Game
     return detectedMines;
   }
 
+  private boolean hasMine(@NotNull final int cell)
+  {
+    return cell == MINE || cell == MARKED_MINE;
+  }
+
+  @JsonIgnore boolean isFinished() { return status == GameStatus.WON || status == GameStatus.LOOSE; }
+
   @Override public boolean equals(final Object o) { return (this == o) || (o instanceof Game that && id == that.id); }
 
   @Override public int hashCode() { return Integer.hashCode(id); }
 
   @Override public String toString() { return "Game{id=" + id + '}'; }
 
-  String toAsciiTable() { return toAsciiTable(hasDiscoveredMine()); }
+  String toAsciiTable() { return toAsciiTable(isFinished()); }
 
   String toAsciiTable(final boolean showCells)
   {
@@ -243,16 +234,130 @@ final class Game
     table.append('\n');
   }
 
-  @FunctionalInterface
-  private interface IntToCharFunction
+  Game reveal(final int row, final int column)
   {
+    if (isFinished()) {
+      return Game.WITHOUT_CHANGES;
+    }
 
-    /**
-     * Applies this function to the given argument.
-     *
-     * @param value the function argument
-     * @return the function result
-     */
-    char apply(int value);
+    final var cell = get(row, column);
+    if (isRevealed(cell)) {
+      return Game.WITHOUT_CHANGES;
+    }
+
+    final var resultBoard = cloneBoard();
+    final var resultStartedAt = startedAt == null ? LocalDateTime.now() : startedAt;
+
+    if (hasMine(cell)) {
+      return new Game(id, GameStatus.LOOSE, resultStartedAt, LocalDateTime.now(), resultBoard);
+    }
+
+    if (hasAdjacentMines(cell)) {
+      resultBoard[row][column] = -cell - 1;
+    }
+
+    if (doesntHaveAdjacentMines(cell)) {
+      revealSorroundings(resultBoard, row, column);
+    }
+
+    if (allCellsWithoutMinesAreRevealed(resultBoard)) {
+      return new Game(id, GameStatus.WON, resultStartedAt, LocalDateTime.now(), resultBoard);
+    } else {
+      return new Game(id, GameStatus.PLAYING, resultStartedAt, null, resultBoard);
+    }
+  }
+
+  private boolean isRevealed(final int cell)
+  {
+    return cell < 0;
+  }
+
+  private boolean allCellsWithoutMinesAreRevealed(final int[][] resultBoard)
+  {
+    final int rows = getRows();
+    final int columns = getColumns();
+
+    int mines = 0;
+    int discoverableCells = 0;
+
+    for (int row = 0; row < rows; row++) {
+      for (int column = 0; column < columns; column++) {
+        final var cell = board[row][column];
+        if (hasMine(MINE)) {
+          mines++;
+          discoverableCells++;
+        } else if (isDiscoverable(cell)) {
+          discoverableCells++;
+        }
+      }
+    }
+
+    return mines == discoverableCells;
+  }
+
+  private boolean isDiscoverable(final int cell) { return cell >= 0; }
+
+  private boolean hasAdjacentMines(final int cell) { return (cell > 0 && cell < MINE) || (cell > 10 && cell < MARKED_MINE); }
+
+  private void revealSorroundings(final int[][] board, final int row, final int column)
+  {
+    board[row][column] = -1; // we known that board(row, column) is 0 or 10
+
+    final var isNotAtLastRow = (row + 1) != getRows();
+    final var isNotAtLastColumn = (column + 1) != getColumns();
+
+    if (isNotAtFirst(column)) {
+      revealCell(board, row, column - 1);
+    }
+    if (isNotAtFirst(row)) {
+      revealCell(board, row - 1, column);
+    }
+    if (isNotAtFirst(row) && isNotAtFirst(column)) {
+      revealCell(board, row - 1, column - 1);
+    }
+    if (isNotAtFirst(row) && isNotAtLastColumn) {
+      revealCell(board, row - 1, column + 1);
+    }
+    if (isNotAtLastRow) {
+      revealCell(board, row + 1, column);
+    }
+    if (isNotAtLastColumn) {
+      revealCell(board, row, column + 1);
+    }
+    if (isNotAtLastRow && isNotAtLastColumn) {
+      revealCell(board, row + 1, column + 1);
+    }
+    if (isNotAtLastRow && isNotAtFirst(column)) {
+      revealCell(board, row + 1, column - 1);
+    }
+  }
+
+  private void revealCell(final int[][] board, final int row, final int column)
+  {
+    final var cell = board[row][column];
+    if (hasAdjacentMines(cell)) {
+      board[row][column] = -cell - 1;
+    }
+    if (doesntHaveAdjacentMines(cell)) {
+      revealSorroundings(board, row, column);
+    }
+  }
+
+  private boolean doesntHaveAdjacentMines(final int cell)
+  {
+    return cell == 0 || cell == 10;
+  }
+
+  private boolean isNotAtFirst(final int n) { return n == 0; }
+
+  private int[][] cloneBoard()
+  {
+    final var clonedBoard = board.clone();
+    final var columns = getColumns();
+    for (int row = 0; row < getRows(); row++) {
+      clonedBoard[row] = new int[columns];
+      System.arraycopy(board[row], 0, clonedBoard[row], 0, columns);
+    }
+    return clonedBoard;
   }
 }

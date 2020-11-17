@@ -21,12 +21,30 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
+
+CREATE TYPE minesweeper.GameStatus AS ENUM ('CREATED', 'PLAYING', 'WON', 'LOOSE');
+COMMENT ON TYPE minesweeper.GameStatus IS $$Possible status of a minesweeper game.
+
+Possible values are:
+
+1. **CREATED**: The game has been created, but no cell was revealed.
+2. **PLAYING**: The game has been created, and at least ONE cell was revealed (and no revealed cell was a mine).
+1. **WON**: ALL cells has been revelead.
+1. **LOOSE**: Last revealed cell was a MINE.
+$$;
+
 CREATE TABLE minesweeper.Games
 (
     id    SERIAL PRIMARY KEY,
-    board integer[][] NOT NULL
+    status minesweeper.GameStatus DEFAULT 'CREATED' NOT NULL,
+    startedAt TIMESTAMP,
+    finishedAt TIMESTAMP,
+    board INTEGER[][] NOT NULL
 );
 
 COMMENT ON TABLE minesweeper.Games IS $$Games played or being, by now they only have a unique ID and the board definition$$;
-COMMENT ON COLUMN minesweeper.Games.id IS $$unique ID of the game$$;
-COMMENT ON COLUMN minesweeper.Games.board IS $$cells defined for the game's board$$;
+COMMENT ON COLUMN minesweeper.Games.id IS $$Unique ID of the minesweeper game$$;
+COMMENT ON COLUMN minesweeper.Games.status IS $$Current status of the game$$;
+COMMENT ON COLUMN minesweeper.Games.startedAt IS $$Instant in which the game was started (the first cell was revealed)$$;
+COMMENT ON COLUMN minesweeper.Games.finishedAt IS $$Instant in which the game was finished (the status passed to `WON` or `LOOSE`)$$;
+COMMENT ON COLUMN minesweeper.Games.board IS $$Cells defined for the game's board$$;

@@ -28,6 +28,7 @@ import io.swagger.annotations.ApiParam;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -48,7 +49,7 @@ class GamesEndPoint
    * Creates a {@link Game} for desired level.
    *
    * @param level {@link GameLevel} of the {@link Game} to create.
-   * @return a newly created {@link Game}, with all its cells marked as {@link Game#UNKNOWN}.
+   * @return a newly created {@link Game}, with all its cells obfuscated.
    */
   @ApiOperation(value = "Creates a Game for desired level.")
   @PostMapping("create/{level}")
@@ -63,7 +64,7 @@ class GamesEndPoint
    * @param rows    rows of the {@link Game}'s board.
    * @param columns columns of the {@link Game}'s board.
    * @param mines   mines in the {@link Game}'s board.
-   * @return a newly created {@link Game}, with all its cells marked as {@link Game#UNKNOWN}.
+   * @return a newly created {@link Game}, with all its cells obfuscated.
    */
   @ApiOperation(value = "Creates a Game with custom configuration.")
   @PostMapping("create/custom")
@@ -73,5 +74,28 @@ class GamesEndPoint
       @ApiParam(value = "mines in the Game's board.", readOnly = true) @RequestParam @NotNull @Positive final Integer mines)
   {
     return service.createCustomGame(rows, columns, mines);
+  }
+
+  /**
+   * Reveals a cell in a {@link Game}.
+   *
+   * @param gameId unique gameId of the {@link Game}.
+   * @param row    row of the {@link Game}'s board's cell to reveal.
+   * @param column column of the {@link Game}'s board's cell to reveal.
+   * @return {@link Game}, cell revealed. If it was a mine game is marked as FINISHED.
+   */
+  @ApiOperation(value = """
+                        Reveals a Game's board cell.
+                                                
+                        If the game wasn't started at the time, then it is marked as PLAYING.
+                        If the cell was already revealed, nothing happens.
+                        """)
+  @PutMapping("{gameId}/reveal/{row}/{column}")
+  Game reveal(
+      @ApiParam(value = "gameId of the game on which the cell must be revealed.", readOnly = true) @Positive @PathVariable final int gameId,
+      @ApiParam(value = "row of the cell to reveal.", readOnly = true) @Positive @PathVariable final int row,
+      @ApiParam(value = "column of the cell to reveal.", readOnly = true) @Positive @PathVariable final int column)
+  {
+    return service.reveal(gameId, row, column);
   }
 }
