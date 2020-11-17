@@ -282,12 +282,14 @@ final class Game
 
     for (int row = 0; row < rows; row++) {
       for (int column = 0; column < columns; column++) {
-        final var cell = board[row][column];
-        if (hasMine(MINE)) {
+        final var cell = resultBoard[row][column];
+        if (hasMine(cell)) {
           mines++;
           discoverableCells++;
-        } else if (isDiscoverable(cell)) {
-          discoverableCells++;
+        } else {
+          if (isDiscoverable(cell)) {
+            discoverableCells++;
+          }
         }
       }
     }
