@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @Validated
@@ -106,9 +107,9 @@ class GamesEndPoint
                 """)
   @PutMapping("{gameId}/reveal/{row}/{column}")
   Game reveal(
-      @ApiParam(value = "gameId of the game on which the cell must be revealed.", readOnly = true) @Positive @PathVariable final int gameId,
-      @ApiParam(value = "row of the cell to reveal.", readOnly = true) @Positive @PathVariable final int row,
-      @ApiParam(value = "column of the cell to reveal.", readOnly = true) @Positive @PathVariable final int column)
+      @ApiParam(value = "gameId of the game on which the cell must be revealed.", readOnly = true) @PathVariable final int gameId,
+      @ApiParam(value = "row of the cell to reveal.", readOnly = true) @PositiveOrZero @PathVariable final int row,
+      @ApiParam(value = "column of the cell to reveal.", readOnly = true) @PositiveOrZero @PathVariable final int column)
   {
     return service.reveal(gameId, row, column);
   }
