@@ -23,6 +23,9 @@
  */
 
 CREATE TYPE minesweeper.GameStatus AS ENUM ('CREATED', 'PLAYING', 'WON', 'LOOSE');
+
+CREATE CAST (varchar AS minesweeper.GameStatus) WITH INOUT AS IMPLICIT;
+
 COMMENT ON TYPE minesweeper.GameStatus IS $$Possible status of a minesweeper game.
 
 Possible values are:
