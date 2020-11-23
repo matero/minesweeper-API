@@ -22,7 +22,7 @@
  SOFTWARE.
  */
 
-CREATE TYPE minesweeper.GameStatus AS ENUM ('CREATED', 'PLAYING', 'WON', 'LOOSE');
+CREATE TYPE minesweeper.GameStatus AS ENUM ('CREATED', 'PLAYING', 'PAUSED', 'WON', 'LOOSE');
 
 CREATE CAST (varchar AS minesweeper.GameStatus) WITH INOUT AS IMPLICIT;
 

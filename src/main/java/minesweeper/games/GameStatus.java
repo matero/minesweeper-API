@@ -25,5 +25,5 @@ package minesweeper.games;
 
 enum GameStatus
 {
-  CREATED, PLAYING, WON, LOOSE
+  CREATED, PLAYING, PAUSED, WON, LOOSE
 }
