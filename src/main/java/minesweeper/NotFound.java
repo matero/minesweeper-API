@@ -23,8 +23,6 @@
  */
 package minesweeper;
 
-import minesweeper.games.MinesweeperException;
-
 public final class NotFound extends MinesweeperException
 {
   public NotFound(final String message) { super(message); }

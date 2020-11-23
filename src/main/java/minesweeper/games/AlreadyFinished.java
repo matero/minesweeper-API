@@ -23,6 +23,8 @@
  */
 package minesweeper.games;
 
+import minesweeper.MinesweeperException;
+
 public class AlreadyFinished extends MinesweeperException
 {
   AlreadyFinished(final Game game)
