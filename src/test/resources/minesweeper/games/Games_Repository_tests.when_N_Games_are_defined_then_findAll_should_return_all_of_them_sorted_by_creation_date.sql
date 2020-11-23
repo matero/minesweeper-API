@@ -21,8 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-INSERT INTO minesweeper.Games(id, board)
-VALUES (1, '{{1,2,3},{4,5,6},{7,8,9}}');
+INSERT INTO minesweeper.Games(id, creation, board)
+VALUES (1, current_timestamp - interval '1 minute', '{{1,2,3},{4,5,6},{7,8,9}}'),
+       (2, current_timestamp - interval '30 seconds', '{{1,2,3},{4,5,6},{7,8,9}}'),
+       (3, current_timestamp - interval '34 seconds', '{{1,2,3},{4,5,6},{7,8,9}}');
 
-INSERT INTO minesweeper.playtimes(game, startedat)
-VALUES (1, current_timestamp - interval '2 seconds');

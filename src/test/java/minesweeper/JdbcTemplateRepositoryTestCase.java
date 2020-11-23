@@ -44,4 +44,6 @@ public abstract class JdbcTemplateRepositoryTestCase
   protected final JdbcTemplate db() { return jdbcTemplate; }
 
   protected Boolean selectBoolean(final String sql) { return jdbcTemplate.queryForObject(sql, Boolean.class); }
+
+  protected Boolean selectBoolean(final String sql, final int id) { return jdbcTemplate.queryForObject(sql, new Object[]{id}, Boolean.class); }
 }

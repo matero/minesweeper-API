@@ -34,7 +34,10 @@ import java.time.LocalDateTime;
 import java.time.Month;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -50,8 +53,8 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 
   @Test void when_no_Game_exists_for_provided_id_then_findById_should_fail_with_NotFound()
   {
-    //given: DB is empty -> no Game exists
-    assumeTrue(selectBoolean("SELECT count(*) = 0 FROM minesweeper.Games"));
+    //given:
+    noGamesAreDefined();
 
     //when: findById should fail with NotFound
     final var notFound = assertThrows(NotFound.class, () -> repo.findById(1));
@@ -60,8 +63,8 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 
   @Sql @Test void when_Game_exists_for_provided_id_then_findById_should_return_it()
   {
-    //given: DB is empty -> no Game exists
-    assumeTrue(selectBoolean("SELECT count(*) = 1 FROM minesweeper.Games"));
+    //given:
+    oneGameIsDefinedWithId(1);
 
     //when: look for Game with id=1
     final var game = repo.findById(1);
@@ -81,8 +84,8 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 
   @Sql @Test void when_Game_has_no_play_times_then_findById_should_assign_it_a_ZERO_playtime()
   {
-    //given: DB is empty -> no Game exists
-    assumeTrue(selectBoolean("SELECT count(*) = 1 FROM minesweeper.Games"));
+    //given:
+    oneGameIsDefinedWithId(1);
 
     //when: look for Game with id=1
     final var game = repo.findById(1);
@@ -93,8 +96,8 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 
   @Sql @Test void when_Game_has_one_unfinished_play_time_then_findById_should_assign_time_lapsed_since_playtime_has_started_as_playtime()
   {
-    //given: DB is empty -> no Game exists
-    assumeTrue(selectBoolean("SELECT count(*) = 1 FROM minesweeper.Games"));
+    //given:
+    oneGameIsDefinedWithId(1);
 
     //when: look for Game with id=1
     final var game = repo.findById(1);
@@ -105,8 +108,8 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 
   @Sql @Test void when_Game_has_one_finished_play_time_then_findById_should_assign_it_the_time_lapsed_between_start_and_finish_as_playtime()
   {
-    //given: DB is empty -> no Game exists
-    assumeTrue(selectBoolean("SELECT count(*) = 1 FROM minesweeper.Games"));
+    //given:
+    oneGameIsDefinedWithId(1);
 
     //when: look for Game with id=1
     final var game = repo.findById(1);
@@ -117,13 +120,55 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 
   @Sql @Test void when_Game_has_multiple_playTimes_then_findById_should_assign_the_sum_of_times_lapsed_between_start_and_finish_of_them_as_playtime()
   {
-    //given: DB is empty -> no Game exists
-    assumeTrue(selectBoolean("SELECT count(*) = 1 FROM minesweeper.Games"));
+    //given:
+    oneGameIsDefinedWithId(1);
 
     //when: look for Game with id=1
     final var game = repo.findById(1);
 
     //then
     assertThat(game.playTime, is(Duration.ofMillis(2700)));
+  }
+
+  @Test void when_no_Game_is_defined_then_findAll_should_be_an_empty_list()
+  {
+    //given:
+    noGamesAreDefined();
+
+    //when: look for Game with id=1
+    final var games = repo.findAll();
+
+    //then
+    assertThat(games, is(empty()));
+  }
+
+  @Sql @Test void when_N_Games_are_defined_then_findAll_should_return_all_of_them_sorted_by_creation_date()
+  {
+    //given:
+    definedGamesCountIs(3);
+
+    //when: look for Game with id=1
+    final var games = repo.findAll();
+
+    //then
+    assertThat(games, hasSize(3));
+    assertThat(games.get(0).id, is(equalTo(1))); // cant use bean property matcher as it has no getter
+    assertThat(games.get(1).id, is(equalTo(3)));
+    assertThat(games.get(2).id, is(equalTo(2)));
+  }
+
+  private void noGamesAreDefined()
+  {
+    definedGamesCountIs(0);
+  }
+
+  private void definedGamesCountIs(final int amount)
+  {
+    assumeTrue(selectBoolean("SELECT count(*) = ? FROM minesweeper.Games", amount));
+  }
+
+  private void oneGameIsDefinedWithId(final int id)
+  {
+    assumeTrue(selectBoolean("SELECT count(*) = 1 FROM minesweeper.Games WHERE id=?", id));
   }
 }

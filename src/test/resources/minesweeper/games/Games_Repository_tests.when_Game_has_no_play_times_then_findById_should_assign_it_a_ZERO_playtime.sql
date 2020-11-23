@@ -21,5 +21,5 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-INSERT INTO minesweeper.Games(id, status, creation, board)
-VALUES (1, 'CREATED', '2008-03-20'::date, '{{1,2,3},{4,5,6},{7,8,9}}');
+INSERT INTO minesweeper.Games(id, board)
+VALUES (1, '{{1,2,3},{4,5,6},{7,8,9}}');

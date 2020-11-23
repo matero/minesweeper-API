@@ -106,7 +106,7 @@ class Repository
       final var creation = rs.getObject(3, LocalDateTime.class);
       final var finishedAt = rs.getObject(4, LocalDateTime.class);
       final var board = readBoard(rs.getArray(5));
-      final var playTime = Duration.ofMillis(rs.getLong(5));
+      final var playTime = Duration.ofMillis(rs.getLong(6));
 
       return new Game(id, status, creation, finishedAt, playTime, board.clone());
     });
