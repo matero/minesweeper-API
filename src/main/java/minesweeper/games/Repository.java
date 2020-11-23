@@ -87,13 +87,26 @@ class Repository
 
   List<Game> findAll()
   {
-    return db.query("SELECT id, status, creation, finishedAt, board FROM minesweeper.Games", (rs, rowNum) -> {
+    return db.query("""
+                    SELECT
+                      game.id,
+                      game.status,
+                      game.creation,
+                      game.finishedAt,
+                      game.board,
+                      coalesce((
+                        SELECT extract(milliseconds FROM sum(coalesce(play.finishedat, current_timestamp) - play.startedat))
+                        FROM minesweeper.PlayTimes play
+                        WHERE game.id = play.game), 0) as playtimeInMillis
+                    FROM minesweeper.Games game
+                    ORDER BY game.creation
+                    """, (rs, rowNum) -> {
       final var id = rs.getInt(1);
       final var status = readStatus(rs.getString(2));
       final var creation = rs.getObject(3, LocalDateTime.class);
       final var finishedAt = rs.getObject(4, LocalDateTime.class);
       final var board = readBoard(rs.getArray(5));
-      final var playTime = Duration.ofMillis(100);
+      final var playTime = Duration.ofMillis(rs.getLong(5));
 
       return new Game(id, status, creation, finishedAt, playTime, board.clone());
     });
@@ -102,8 +115,9 @@ class Repository
   int createGameWith(final int[][] board)
   {
     final var gameId = new GeneratedKeyHolder();
-    final var psc = insertIntoGames.newPreparedStatementCreator(Collections.singletonList(board));
-    db.update(psc, gameId);
+    // use singletonList instead of List.of because the last one creates a list of int[]
+    final var createGame = insertIntoGames.newPreparedStatementCreator(Collections.singletonList(board));
+    db.update(createGame, gameId);
     return gameId.getKey().intValue();
   }
 
