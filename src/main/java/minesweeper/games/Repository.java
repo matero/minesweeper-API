@@ -33,6 +33,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import java.sql.Array;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -57,13 +58,26 @@ class Repository
   Game findById(final int gameId)
   {
     final Object[] id = {gameId};
-    final var game = db.query("SELECT status, startedAt, finishedAt, board FROM minesweeper.Games WHERE id=?", id, (rs, rowNum) -> {
+    final var game = db.query("""
+                              SELECT
+                                game.status,
+                                game.creation,
+                                game.finishedAt,
+                                game.board,
+                                coalesce((
+                                  SELECT extract(milliseconds FROM sum(coalesce(play.finishedat, current_timestamp) - play.startedat))
+                                  FROM minesweeper.PlayTimes play
+                                  WHERE game.id = play.game), 0) as playtimeInMillis
+                              FROM minesweeper.Games game
+                              WHERE id = ?
+                              """, id, (rs, rowNum) -> {
       final var status = readStatus(rs.getString(1));
-      final var startedAt = rs.getObject(2, LocalDateTime.class);
+      final var creation = rs.getObject(2, LocalDateTime.class);
       final var finishedAt = rs.getObject(3, LocalDateTime.class);
       final var board = readBoard(rs.getArray(4));
+      final var playTime = Duration.ofMillis(rs.getLong(5));
 
-      return new Game(gameId, status, startedAt, finishedAt, board.clone());
+      return new Game(gameId, status, creation, finishedAt, playTime, board.clone());
     });
     if (game.isEmpty()) {
       throw new NotFound("No Game is defined with id=" + gameId);
@@ -73,14 +87,15 @@ class Repository
 
   List<Game> findAll()
   {
-    return db.query("SELECT id, status, startedAt, finishedAt, board FROM minesweeper.Games", (rs, rowNum) -> {
+    return db.query("SELECT id, status, creation, finishedAt, board FROM minesweeper.Games", (rs, rowNum) -> {
       final var id = rs.getInt(1);
       final var status = readStatus(rs.getString(2));
-      final var startedAt = rs.getObject(3, LocalDateTime.class);
+      final var creation = rs.getObject(3, LocalDateTime.class);
       final var finishedAt = rs.getObject(4, LocalDateTime.class);
       final var board = readBoard(rs.getArray(5));
+      final var playTime = Duration.ofMillis(100);
 
-      return new Game(id, status, startedAt, finishedAt, board.clone());
+      return new Game(id, status, creation, finishedAt, playTime, board.clone());
     });
   }
 
@@ -96,10 +111,10 @@ class Repository
   {
     db.update("""
               UPDATE minesweeper.Games
-              SET status=?, startedAt=?, finishedAt=?, board=?
+              SET status=?, finishedAt=?, board=?
               WHERE id=?
               """,
-              game.status.name(), game.startedAt, game.finishedAt, game.board, game.id);
+              game.status.name(), game.finishedAt, game.board, game.id);
   }
 
   private static PreparedStatementCreatorFactory makeInsertIntoGames()

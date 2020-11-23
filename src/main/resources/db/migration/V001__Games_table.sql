@@ -40,7 +40,7 @@ CREATE TABLE minesweeper.Games
 (
     id    SERIAL PRIMARY KEY,
     status minesweeper.GameStatus DEFAULT 'CREATED' NOT NULL,
-    startedAt TIMESTAMP,
+    creation TIMESTAMP DEFAULT current_timestamp NOT NULL,
     finishedAt TIMESTAMP,
     board INTEGER[][] NOT NULL
 );
@@ -48,6 +48,6 @@ CREATE TABLE minesweeper.Games
 COMMENT ON TABLE minesweeper.Games IS $$Games played or being, by now they only have a unique ID and the board definition$$;
 COMMENT ON COLUMN minesweeper.Games.id IS $$Unique ID of the minesweeper game$$;
 COMMENT ON COLUMN minesweeper.Games.status IS $$Current status of the game$$;
-COMMENT ON COLUMN minesweeper.Games.startedAt IS $$Instant in which the game was started (the first cell was revealed)$$;
+COMMENT ON COLUMN minesweeper.Games.creation IS $$Instant in which the game was created$$;
 COMMENT ON COLUMN minesweeper.Games.finishedAt IS $$Instant in which the game was finished (the status passed to `WON` or `LOOSE`)$$;
 COMMENT ON COLUMN minesweeper.Games.board IS $$Cells defined for the game's board$$;

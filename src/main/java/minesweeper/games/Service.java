@@ -50,7 +50,7 @@ class Service
                           .calculateSurroundingMines()
                           .build();
     final int assignedId = repository.createGameWith(board);
-    final var game = new Game(assignedId, GameStatus.CREATED, Game.NOT_STARTED, Game.NOT_FINISHED, board);
+    final var game = new Game(assignedId, GameStatus.CREATED, Game.NOT_STARTED, Game.NOT_FINISHED, null, board);
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Game#" + assignedId + " created, with board:\n\n" + game.toAsciiTable());
 
@@ -80,5 +80,37 @@ class Service
   @Transactional(readOnly = true) List<Game> findAll()
   {
     return repository.findAll();
+  }
+
+  @Transactional Game flag(final int gameId, final int row, final int column)
+  {
+    final var game = repository.findById(gameId);
+    if (game.isFinished()) {
+      throw new AlreadyFinished(game);
+    }
+    final var result = game.flag(row, column);
+
+    if (noChangeWasPerformedIn(result)) {
+      return game;
+    }
+
+    repository.update(result);
+    return result;
+  }
+
+  Game unflag(final int gameId, final int row, final int column)
+  {
+    final var game = repository.findById(gameId);
+    if (game.isFinished()) {
+      throw new AlreadyFinished(game);
+    }
+    final var result = game.unflag(row, column);
+
+    if (noChangeWasPerformedIn(result)) {
+      return game;
+    }
+
+    repository.update(result);
+    return result;
   }
 }

@@ -24,9 +24,9 @@
 package minesweeper.games;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 final class Game
@@ -36,17 +36,19 @@ final class Game
   //
   static final Game WITHOUT_CHANGES = null;
   static final int MINE = 9;
-  private static final int MARKED_MINE = MINE + 10;
+  private static final int FLAG = 10;
+  private static final int MARKED_MINE = MINE + FLAG;
   static final LocalDateTime NOT_STARTED = null;
   static final LocalDateTime NOT_FINISHED = null;
 
   private static final char UNDISCOVERED = '#';
-  private static final char MARK = '?';
+  private static final char FLAG_MARK = '?';
 
-  @JsonProperty final int id;
-  @JsonProperty final GameStatus status;
-  @JsonProperty final LocalDateTime startedAt;
-  @JsonProperty final LocalDateTime finishedAt;
+  final int id;
+  final GameStatus status;
+  final LocalDateTime creation;
+  final LocalDateTime finishedAt;
+  final Duration playTime;
 
   // undiscovered values: all of them represented as '#'
   //   0 (cell with no adjacent mines)
@@ -74,12 +76,13 @@ final class Game
   // on creation ALL values are between 0..9 -> no cell is known
   @NotNull @JsonIgnore final int[][] board;
 
-  Game(final int id, final GameStatus status, final LocalDateTime startedAt, final LocalDateTime finishedAt, final int[][] board)
+  Game(final int id, final GameStatus status, final LocalDateTime creation, final LocalDateTime finishedAt, final Duration playTime, final int[][] board)
   {
     this.id = id;
     this.status = status;
-    this.startedAt = startedAt;
+    this.creation = creation;
     this.finishedAt = finishedAt;
+    this.playTime = playTime;
     this.board = board;
   }
 
@@ -89,23 +92,23 @@ final class Game
       throw new IllegalArgumentException("row must be 0 or positive");
     }
     if (row >= getRows()) {
-      throw new IllegalArgumentException("row is too big. This game has " + getRows() + " rows (and this board access is 0..n-1 indexed)");
+      throw new IllegalArgumentException("row is too big. This game has " + getRows() + " rows (and board access is 0..n-1 indexed)");
     }
     if (column < 0) {
       throw new IllegalArgumentException("column must be 0 or positive");
     }
     if (column >= getColumns()) {
-      throw new IllegalArgumentException("row is too big. This game has " + getColumns() + " column (and this board access is 0..n-1 indexed)");
+      throw new IllegalArgumentException("row is too big. This game has " + getColumns() + " column (and board access is 0..n-1 indexed)");
     }
     return board[row][column];
   }
 
-  @JsonProperty char[][] getBoard()
+  char[][] getBoard()
   {
     return isFinished() ? buildBoard(Game::showCell) : buildBoard(Game::translateCell);
   }
 
-  char[][] buildBoard(final IntToCharFunction cellTranslator)
+  private char[][] buildBoard(final IntToCharFunction cellTranslator)
   {
     final var rows = getRows();
     final var columns = getColumns();
@@ -134,7 +137,7 @@ final class Game
       case -8 -> '7';
       case -9 -> '8';
       case 0, 1, 2, 3, 4, 5, 6, 7, 8, MINE -> UNDISCOVERED;
-      case 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 -> MARK;
+      case 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 -> FLAG_MARK;
       default -> throw new IllegalStateException("unexpected cell value: " + cell);
     };
   }
@@ -156,11 +159,11 @@ final class Game
     };
   }
 
-  @JsonProperty int getRows() { return board.length; }
+  int getRows() { return board.length; }
 
-  @JsonProperty int getColumns() { return board[0].length; }
+  int getColumns() { return board[0].length; }
 
-  @JsonProperty int getMinesCount()
+  int getMinesCount()
   {
     final int rows = getRows();
     final int columns = getColumns();
@@ -246,14 +249,14 @@ final class Game
     }
 
     final var resultBoard = cloneBoard();
-    final var resultStartedAt = startedAt == null ? LocalDateTime.now() : startedAt;
+    final var resultStartedAt = creation == null ? LocalDateTime.now() : creation;
 
     if (hasMine(cell)) {
-      return new Game(id, GameStatus.LOOSE, resultStartedAt, LocalDateTime.now(), resultBoard);
+      return new Game(id, GameStatus.LOOSE, resultStartedAt, LocalDateTime.now(), playTime, resultBoard);
     }
 
     if (hasAdjacentMines(cell)) {
-      resultBoard[row][column] = -cell - 1;
+      resultBoard[row][column] = doReveal(cell);
     }
 
     if (doesntHaveAdjacentMines(cell)) {
@@ -261,9 +264,18 @@ final class Game
     }
 
     if (allCellsWithoutMinesAreRevealed(resultBoard)) {
-      return new Game(id, GameStatus.WON, resultStartedAt, LocalDateTime.now(), resultBoard);
+      return new Game(id, GameStatus.WON, resultStartedAt, LocalDateTime.now(), playTime, resultBoard);
     } else {
-      return new Game(id, GameStatus.PLAYING, resultStartedAt, null, resultBoard);
+      return new Game(id, GameStatus.PLAYING, resultStartedAt, null, playTime, resultBoard);
+    }
+  }
+
+  private int doReveal(final int cell)
+  {
+    if (isFlagged(cell)) {
+      return -(cell - 10) - 1;
+    } else {
+      return -cell - 1;
     }
   }
 
@@ -338,7 +350,7 @@ final class Game
   {
     final var cell = board[row][column];
     if (hasAdjacentMines(cell)) {
-      board[row][column] = -cell - 1;
+      board[row][column] = doReveal(cell);
     }
     if (doesntHaveAdjacentMines(cell)) {
       revealSorroundings(board, row, column);
@@ -361,5 +373,47 @@ final class Game
       System.arraycopy(board[row], 0, clonedBoard[row], 0, columns);
     }
     return clonedBoard;
+  }
+
+  Game flag(final int row, final int column)
+  {
+    if (isFinished()) {
+      return Game.WITHOUT_CHANGES;
+    }
+
+    final var cell = get(row, column);
+    if (isFlagged(cell)) {
+      return Game.WITHOUT_CHANGES;
+    }
+    if (isRevealed(cell)) {
+      return Game.WITHOUT_CHANGES;
+    }
+
+    final var resultBoard = cloneBoard();
+    final var resultStartedAt = creation == null ? LocalDateTime.now() : creation;
+    resultBoard[row][column] = cell + FLAG;
+    return new Game(id, GameStatus.PLAYING, resultStartedAt, null, playTime, resultBoard);
+  }
+
+  private boolean isFlagged(final int cell) { return cell > MINE; }
+
+  Game unflag(final int row, final int column)
+  {
+    if (isFinished()) {
+      return Game.WITHOUT_CHANGES;
+    }
+
+    final var cell = get(row, column);
+    if (isRevealed(cell)) {
+      return Game.WITHOUT_CHANGES;
+    }
+    if (!isFlagged(cell)) {
+      return Game.WITHOUT_CHANGES;
+    }
+
+    final var resultBoard = cloneBoard();
+    final var resultStartedAt = creation == null ? LocalDateTime.now() : creation;
+    resultBoard[row][column] = cell - FLAG;
+    return new Game(id, GameStatus.PLAYING, resultStartedAt, null, playTime, resultBoard);
   }
 }

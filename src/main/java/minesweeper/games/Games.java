@@ -42,18 +42,18 @@ import java.util.List;
 @Validated
 @RestController
 @RequestMapping(path = "/games", produces = "application/json; charset=utf-8")
-class GamesEndPoint
+class Games
 {
   private final Service service;
 
-  GamesEndPoint(final Service service) { this.service = service; }
+  Games(final Service service) { this.service = service; }
 
   /**
    * Gets all the {@link Game}s (being?) played.
    *
    * @return the list of known {@link Game}s, sorted by start time.
    */
-  @ApiOperation("Gets all the {@link Game}s (being?) played, sorted by start time.")
+  @ApiOperation("Gets all the Games (being?) played, sorted by start time.")
   @GetMapping
   List<Game> index()
   {
@@ -112,5 +112,53 @@ class GamesEndPoint
       @ApiParam(value = "column of the cell to reveal.", readOnly = true) @PositiveOrZero @PathVariable final int column)
   {
     return service.reveal(gameId, row, column);
+  }
+
+  /**
+   * Flags a cell in a {@link Game}.
+   *
+   * @param gameId unique gameId of the {@link Game}.
+   * @param row    row of the {@link Game}'s board's cell to flag.
+   * @param column column of the {@link Game}'s board's cell to flag.
+   * @return {@link Game}, with cell flagged.
+   */
+  @ApiOperation("""
+                Flags a Game's board cell.
+                                        
+                If the game wasn't started at the time, then it is marked as PLAYING.
+                If the cell was already revealed, nothing happens.
+                If the cell was already flagged, nothing happens.
+                """)
+  @PutMapping("{gameId}/flag/{row}/{column}")
+  Game flag(
+      @ApiParam(value = "gameId of the game on which the cell must be flagged.", readOnly = true) @PathVariable final int gameId,
+      @ApiParam(value = "row of the cell to flag.", readOnly = true) @PositiveOrZero @PathVariable final int row,
+      @ApiParam(value = "column of the cell to flag.", readOnly = true) @PositiveOrZero @PathVariable final int column)
+  {
+    return service.flag(gameId, row, column);
+  }
+
+  /**
+   * Removes the flag in a {@link Game}'s cell.
+   *
+   * @param gameId unique gameId of the {@link Game}.
+   * @param row    row of the {@link Game}'s board's cell to un-flag.
+   * @param column column of the {@link Game}'s board's cell to un-flag.
+   * @return {@link Game}, with cell un-flagged.
+   */
+  @ApiOperation("""
+                Un-flags a Game's board cell.
+                                        
+                If the game wasn't started at the time, then it is marked as PLAYING.
+                If the cell was already revealed, nothing happens.
+                If the cell wasn't flagged, nothing happens.
+                """)
+  @PutMapping("{gameId}/unflag/{row}/{column}")
+  Game unflag(
+      @ApiParam(value = "gameId of the game on which the cell must be flagged.", readOnly = true) @PathVariable final int gameId,
+      @ApiParam(value = "row of the cell to flag.", readOnly = true) @PositiveOrZero @PathVariable final int row,
+      @ApiParam(value = "column of the cell to flag.", readOnly = true) @PositiveOrZero @PathVariable final int column)
+  {
+    return service.unflag(gameId, row, column);
   }
 }

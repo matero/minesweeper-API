@@ -132,5 +132,17 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler
   {
     return Map.of("errors", e.getMessage());
   }
+
+  @ExceptionHandler(IllegalArgumentException.class) @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY) @ResponseBody @NonNull
+  Map<String, Object> onIllegalArgument(final IllegalArgumentException e)
+  {
+    return Map.of("errors", e.getMessage());
+  }
+
+  @ExceptionHandler(IllegalStateException.class) @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR) @ResponseBody @NonNull
+  Map<String, Object> onIllegalState(final IllegalStateException e)
+  {
+    return Map.of("errors", e.getMessage());
+  }
 }
 

@@ -93,7 +93,7 @@ class DatabaseConfig
 }
 
 @Component
-final class FlywayMigrationStrategyImpl implements FlywayMigrationStrategy
+final class Flyway__7_2__MigrationStrategy implements FlywayMigrationStrategy
 {
   @Override public void migrate(final Flyway flyway) { flyway.migrate(); }
 }

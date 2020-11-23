@@ -49,7 +49,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <junit-jupiter.version>5.7.0</junit-jupiter.version>
-
+    <flyway.version>7.2.0</flyway.version>
     <skipUnitTests>false</skipUnitTests>
   </properties>
 
@@ -69,9 +69,17 @@
 
       <!-- testing -->
       <dependency>
-        <groupId>org.assertj</groupId>
-        <artifactId>assertj-core</artifactId>
-        <version>3.18.1</version>
+        <groupId>io.zonky.test.postgres</groupId>
+        <artifactId>embedded-postgres-binaries-bom</artifactId>
+        <version>12.3.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.flywaydb.flyway-test-extensions</groupId>
+        <artifactId>flyway-spring-test</artifactId>
+        <version>7.0.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -141,8 +149,9 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
+      <groupId>io.zonky.test</groupId>
+      <artifactId>embedded-database-spring-test</artifactId>
+      <version>1.6.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
