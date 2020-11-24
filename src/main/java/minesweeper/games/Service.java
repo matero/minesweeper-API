@@ -38,6 +38,11 @@ class Service
 
   Service(final Repository repository) { this.repository = repository; }
 
+  @Transactional(readOnly = true) List<Game> findAll()
+  {
+    return repository.findAll();
+  }
+
   @Transactional Game createGameOfLevel(final GameLevel level)
   {
     return createCustomGame(level.rows, level.columns, level.mines);
@@ -50,7 +55,7 @@ class Service
                           .calculateSurroundingMines()
                           .build();
     final int assignedId = repository.createGameWith(board);
-    final var game = new Game(assignedId, GameStatus.CREATED, Game.NOT_STARTED, Game.NOT_FINISHED, null, board);
+    final var game = get(assignedId);
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Game#" + assignedId + " created, with board:\n\n" + game.toAsciiTable());
 
@@ -61,56 +66,61 @@ class Service
 
   @Transactional Game reveal(final int gameId, final int row, final int column)
   {
-    final var game = repository.findById(gameId);
-    if (game.isFinished()) {
-      throw new AlreadyFinished(game);
-    }
-    final var result = game.reveal(row, column);
+    final Game game = getGameWithId(gameId);
+    final var cellReveal = game.reveal(row, column);
 
-    if (noChangeWasPerformedIn(result)) {
+    if (cellReveal.hasNoChanges()) {
       return game;
     }
 
-    repository.update(result);
-    return result;
-  }
-
-  private boolean noChangeWasPerformedIn(final Game game) { return game == Game.WITHOUT_CHANGES; }
-
-  @Transactional(readOnly = true) List<Game> findAll()
-  {
-    return repository.findAll();
+    repository.updateGameWith(cellReveal);
+    return get(gameId);
   }
 
   @Transactional Game flag(final int gameId, final int row, final int column)
   {
-    final var game = repository.findById(gameId);
-    if (game.isFinished()) {
-      throw new AlreadyFinished(game);
-    }
-    final var result = game.flag(row, column);
+    final Game game = getGameWithId(gameId);
+    final var cellFlag = game.flag(row, column);
 
-    if (noChangeWasPerformedIn(result)) {
+    if (cellFlag.hasNoChanges()) {
       return game;
     }
 
-    repository.update(result);
-    return result;
+    repository.updateGameWith(cellFlag);
+    return get(gameId);
   }
 
-  Game unflag(final int gameId, final int row, final int column)
+  @Transactional Game unflag(final int gameId, final int row, final int column)
   {
-    final var game = repository.findById(gameId);
-    if (game.isFinished()) {
-      throw new AlreadyFinished(game);
-    }
-    final var result = game.unflag(row, column);
+    final Game game = getGameWithId(gameId);
+    final var cellUnflag = game.unflag(row, column);
 
-    if (noChangeWasPerformedIn(result)) {
+    if (cellUnflag.hasNoChanges()) {
       return game;
     }
 
-    repository.update(result);
-    return result;
+    repository.updateGameWith(cellUnflag);
+    return get(gameId);
+  }
+
+  private Game getGameWithId(final int gameId)
+  {
+    final var game = get(gameId);
+    if (game.isFinished()) {
+      throw new AlreadyFinished(game);
+    }
+    return game;
+  }
+
+  private Game get(final int gameId) { return repository.findById(gameId); }
+
+  Game pause(final int gameId)
+  {
+    final var game = getGameWithId(gameId);
+    if (game.canBePaused()) {
+      repository.pauseGame(gameId);
+      return get(gameId);
+    }
+    return game;
   }
 }

@@ -151,7 +151,7 @@ class Games
                                         
                 If the game wasn't started at the time, then it is marked as PLAYING.
                 If the cell was already revealed, nothing happens.
-                If the cell wasn't flagged, nothing happens.
+                If the cell wasn't flagged, nothing happens.   
                 """)
   @PutMapping("{gameId}/unflag/{row}/{column}")
   Game unflag(
@@ -160,5 +160,24 @@ class Games
       @ApiParam(value = "column of the cell to flag.", readOnly = true) @PositiveOrZero @PathVariable final int column)
   {
     return service.unflag(gameId, row, column);
+  }
+
+  /**
+   * Pause a {@link Game}.
+   *
+   * @param gameId unique gameId of the {@link Game} to pause.
+   * @return the {@link Game}, after the pause is done.
+   */
+  @ApiOperation("""
+                Pauses a Game.
+                                        
+                If the game wasn't started at the time, then nothing is done.
+                If the game was finished, an error advicing that game is finished is reported with code 422.
+                If the game was being played, then its status is changed and the game clock is paused.
+                """)
+  @PutMapping("{gameId}/pause")
+  Game pause(@ApiParam(value = "gameId of the game on which the cell must be flagged.", readOnly = true) @PathVariable final int gameId)
+  {
+    return service.pause(gameId);
   }
 }

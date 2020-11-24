@@ -24,6 +24,7 @@
 package minesweeper.games;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
 import java.time.Duration;
@@ -34,21 +35,18 @@ final class Game
   //
   // will avoid bitwise logic to make code clearer
   //
-  static final Game WITHOUT_CHANGES = null;
   static final int MINE = 9;
   private static final int FLAG = 10;
   private static final int MARKED_MINE = MINE + FLAG;
-  static final LocalDateTime NOT_STARTED = null;
-  static final LocalDateTime NOT_FINISHED = null;
 
   private static final char UNDISCOVERED = '#';
   private static final char FLAG_MARK = '?';
 
-  final int id;
-  final GameStatus status;
-  final LocalDateTime creation;
-  final LocalDateTime finishedAt;
-  final Duration playTime;
+  @JsonProperty final int id;
+  @JsonProperty final GameStatus status;
+  @JsonProperty final LocalDateTime creation;
+  @JsonProperty final LocalDateTime finishedAt;
+  @JsonProperty final Duration playTime;
 
   // undiscovered values: all of them represented as '#'
   //   0 (cell with no adjacent mines)
@@ -103,7 +101,7 @@ final class Game
     return board[row][column];
   }
 
-  char[][] getBoard()
+  @JsonProperty char[][] getBoard()
   {
     return isFinished() ? buildBoard(Game::showCell) : buildBoard(Game::translateCell);
   }
@@ -159,11 +157,11 @@ final class Game
     };
   }
 
-  int getRows() { return board.length; }
+  @JsonProperty int getRows() { return board.length; }
 
-  int getColumns() { return board[0].length; }
+  @JsonProperty int getColumns() { return board[0].length; }
 
-  int getMinesCount()
+  @JsonProperty int getMinesCount()
   {
     final int rows = getRows();
     final int columns = getColumns();
@@ -237,22 +235,21 @@ final class Game
     table.append('\n');
   }
 
-  Game reveal(final int row, final int column)
+  GameChange reveal(final int row, final int column)
   {
     if (isFinished()) {
-      return Game.WITHOUT_CHANGES;
+      return GameChange.none();
     }
 
     final var cell = get(row, column);
     if (isRevealed(cell)) {
-      return Game.WITHOUT_CHANGES;
+      return GameChange.none();
     }
 
     final var resultBoard = cloneBoard();
-    final var resultStartedAt = creation == null ? LocalDateTime.now() : creation;
 
     if (hasMine(cell)) {
-      return new Game(id, GameStatus.LOOSE, resultStartedAt, LocalDateTime.now(), playTime, resultBoard);
+      return new GameChange(id, GameStatus.LOOSE, resultBoard);
     }
 
     if (hasAdjacentMines(cell)) {
@@ -264,9 +261,9 @@ final class Game
     }
 
     if (allCellsWithoutMinesAreRevealed(resultBoard)) {
-      return new Game(id, GameStatus.WON, resultStartedAt, LocalDateTime.now(), playTime, resultBoard);
+      return new GameChange(id, GameStatus.WON, resultBoard);
     } else {
-      return new Game(id, GameStatus.PLAYING, resultStartedAt, null, playTime, resultBoard);
+      return new GameChange(id, GameStatus.PLAYING, resultBoard);
     }
   }
 
@@ -375,45 +372,45 @@ final class Game
     return clonedBoard;
   }
 
-  Game flag(final int row, final int column)
+  GameChange flag(final int row, final int column)
   {
     if (isFinished()) {
-      return Game.WITHOUT_CHANGES;
+      return GameChange.none();
     }
 
     final var cell = get(row, column);
     if (isFlagged(cell)) {
-      return Game.WITHOUT_CHANGES;
+      return GameChange.none();
     }
     if (isRevealed(cell)) {
-      return Game.WITHOUT_CHANGES;
+      return GameChange.none();
     }
 
     final var resultBoard = cloneBoard();
-    final var resultStartedAt = creation == null ? LocalDateTime.now() : creation;
     resultBoard[row][column] = cell + FLAG;
-    return new Game(id, GameStatus.PLAYING, resultStartedAt, null, playTime, resultBoard);
+    return new GameChange(id, GameStatus.PLAYING, resultBoard);
   }
 
   private boolean isFlagged(final int cell) { return cell > MINE; }
 
-  Game unflag(final int row, final int column)
+  GameChange unflag(final int row, final int column)
   {
     if (isFinished()) {
-      return Game.WITHOUT_CHANGES;
+      return GameChange.none();
     }
 
     final var cell = get(row, column);
     if (isRevealed(cell)) {
-      return Game.WITHOUT_CHANGES;
+      return GameChange.none();
     }
     if (!isFlagged(cell)) {
-      return Game.WITHOUT_CHANGES;
+      return GameChange.none();
     }
 
     final var resultBoard = cloneBoard();
-    final var resultStartedAt = creation == null ? LocalDateTime.now() : creation;
     resultBoard[row][column] = cell - FLAG;
-    return new Game(id, GameStatus.PLAYING, resultStartedAt, null, playTime, resultBoard);
+    return new GameChange(id, GameStatus.PLAYING, resultBoard);
   }
+
+  boolean canBePaused() { return status == GameStatus.PLAYING; }
 }

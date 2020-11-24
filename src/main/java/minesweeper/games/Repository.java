@@ -121,14 +121,18 @@ class Repository
     return gameId.getKey().intValue();
   }
 
-  void update(final Game game)
+  void updateGameWith(final GameChange changes)
   {
-    db.update("""
-              UPDATE minesweeper.Games
-              SET status=?, finishedAt=?, board=?
-              WHERE id=?
-              """,
-              game.status.name(), game.finishedAt, game.board, game.id);
+    if (changes.isPaused()) {
+      db.update("call minesweeper.pauseGame(?)", changes.id);
+    } else {
+      db.update("call minesweeper.updateGame(?, ?, ?)", changes.id, changes.status.name(), changes.board);
+    }
+  }
+
+  void pauseGame(final int gameId)
+  {
+    db.update("call minesweeper.pauseGame(?)", gameId);
   }
 
   private static PreparedStatementCreatorFactory makeInsertIntoGames()
