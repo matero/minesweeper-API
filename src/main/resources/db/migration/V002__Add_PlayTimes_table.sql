@@ -24,7 +24,7 @@
 CREATE TABLE minesweeper.PlayTimes
 (
     game       INTEGER REFERENCES minesweeper.Games(id),
-    startedAt  TIMESTAMP,
+    startedAt  TIMESTAMP DEFAULT current_timestamp,
     finishedAt TIMESTAMP,
 
     PRIMARY KEY (game, startedAt)
