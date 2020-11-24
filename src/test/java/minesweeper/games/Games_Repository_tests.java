@@ -32,14 +32,18 @@ import org.springframework.test.context.jdbc.Sql;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.temporal.ChronoUnit;
 
+import static org.exparity.hamcrest.date.LocalDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -47,26 +51,28 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 {
+  private static final int[][] TEST_BOARD = {{0, 1, 9}, {0, 1, 1}, {0, 0, 0}};
+
   Repository repo;
 
   @BeforeEach void setup() { repo = new Repository(db()); }
 
   @Test void when_no_Game_exists_for_provided_id_then_findById_should_fail_with_NotFound()
   {
-    //given:
+    //given
     noGamesAreDefined();
 
-    //when: findById should fail with NotFound
+    //when findById should fail with NotFound
     final var notFound = assertThrows(NotFound.class, () -> repo.findById(1));
     assertEquals("No Game is defined with id=1", notFound.getMessage());
   }
 
   @Sql @Test void when_Game_exists_for_provided_id_then_findById_should_return_it()
   {
-    //given:
+    //given
     oneGameIsDefinedWithId(1);
 
-    //when: look for Game with id=1
+    //when
     final var game = repo.findById(1);
 
     //then
@@ -84,10 +90,10 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 
   @Sql @Test void when_Game_has_no_play_times_then_findById_should_assign_it_a_ZERO_playtime()
   {
-    //given:
+    //given
     oneGameIsDefinedWithId(1);
 
-    //when: look for Game with id=1
+    //when
     final var game = repo.findById(1);
 
     //then
@@ -96,10 +102,10 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 
   @Sql @Test void when_Game_has_one_unfinished_play_time_then_findById_should_assign_time_lapsed_since_playtime_has_started_as_playtime()
   {
-    //given:
+    //given
     oneGameIsDefinedWithId(1);
 
-    //when: look for Game with id=1
+    //when
     final var game = repo.findById(1);
 
     //then
@@ -108,10 +114,10 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 
   @Sql @Test void when_Game_has_one_finished_play_time_then_findById_should_assign_it_the_time_lapsed_between_start_and_finish_as_playtime()
   {
-    //given:
+    //given
     oneGameIsDefinedWithId(1);
 
-    //when: look for Game with id=1
+    //when
     final var game = repo.findById(1);
 
     //then
@@ -120,10 +126,10 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 
   @Sql @Test void when_Game_has_multiple_playTimes_then_findById_should_assign_the_sum_of_times_lapsed_between_start_and_finish_of_them_as_playtime()
   {
-    //given:
+    //given
     oneGameIsDefinedWithId(1);
 
-    //when: look for Game with id=1
+    //when
     final var game = repo.findById(1);
 
     //then
@@ -132,10 +138,10 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 
   @Test void when_no_Game_is_defined_then_findAll_should_be_an_empty_list()
   {
-    //given:
+    //given
     noGamesAreDefined();
 
-    //when: look for Game with id=1
+    //when
     final var games = repo.findAll();
 
     //then
@@ -144,10 +150,10 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 
   @Sql @Test void when_N_Games_are_defined_then_findAll_should_return_all_of_them_sorted_by_creation_date()
   {
-    //given:
+    //given
     definedGamesCountIs(3);
 
-    //when: look for Game with id=1
+    //when look for all Game instances
     final var games = repo.findAll();
 
     //then
@@ -155,6 +161,101 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
     assertThat(games.get(0).id, is(equalTo(1))); // cant use bean property matcher as it has no getter
     assertThat(games.get(1).id, is(equalTo(3)));
     assertThat(games.get(2).id, is(equalTo(2)));
+  }
+
+  @Test void when_Game_is_created_then_its_assigned_id_is_returned()
+  {
+    //given
+    noGamesAreDefined();
+
+    //when
+    final var gameId = repo.createGameWith(TEST_BOARD);
+
+    //then
+    assertThat("with vanilla db the serial should NOT be 0", gameId, is(not(equalTo(0))));
+  }
+
+  @Test void when_Game_is_created_then_its_state_should_be_CREATED()
+  {
+    //given
+    noGamesAreDefined();
+
+    //when
+    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var game = repo.findById(gameId);
+
+    //then
+    assertThat(game.status, is(GameStatus.CREATED));
+  }
+
+  @Test void when_Game_is_created_then_its_creation_should_be_current_timestamp()
+  {
+    //given
+    noGamesAreDefined();
+    final var expectedCreation = LocalDateTime.now();
+
+    //when
+    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var game = repo.findById(gameId);
+
+    //then
+    assertThat(game.creation, is(within(20, ChronoUnit.MILLIS, expectedCreation)));
+  }
+
+  @Test void when_Game_is_created_then_its_finishedAt_should_be_null()
+  {
+    //given
+    noGamesAreDefined();
+
+    //when
+    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var game = repo.findById(gameId);
+
+    //then
+    assertThat(game.finishedAt, is(nullValue()));
+  }
+
+  @Test void when_Game_is_created_then_its_playTime_should_be_ZERO()
+  {
+    //given
+    noGamesAreDefined();
+
+    //when
+    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var game = repo.findById(gameId);
+
+    //then
+    assertThat(game.playTime, is(equalTo(Duration.ZERO)));
+  }
+
+  @Test void when_Game_is_created_then_its_board_should_be_equivalent_to_the_one_defined()
+  {
+    //given
+    noGamesAreDefined();
+
+    //when
+    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var game = repo.findById(gameId);
+
+    //then
+    assertThat(game.getRows(), is(equalTo(3)));
+    assertThat(game.getColumns(), is(equalTo(3)));
+    assertThat(game.getMinesCount(), is(equalTo(1)));
+    assertThat(game.board, is(equalTo(TEST_BOARD)));
+  }
+
+  @Test void when_Game_is_created_then_all_board_cells_should_be_UNDISCOVERED()
+  {
+    //given
+    noGamesAreDefined();
+
+    //when
+    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var game = repo.findById(gameId);
+
+    //then
+    final char[][] expectedBoard = {{'#', '#', '#'}, {'#', '#', '#'}, {'#', '#', '#'}};
+    assertThat(game.getBoard(), is(equalTo(expectedBoard)));
   }
 
   private void noGamesAreDefined()
