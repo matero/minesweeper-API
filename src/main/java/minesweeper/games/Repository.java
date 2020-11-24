@@ -130,10 +130,7 @@ class Repository
     }
   }
 
-  void pauseGame(final int gameId)
-  {
-    db.update("call minesweeper.pauseGame(?)", gameId);
-  }
+  void pauseGame(final int gameId) { db.update("call minesweeper.pauseGame(?)", gameId); }
 
   private static PreparedStatementCreatorFactory makeInsertIntoGames()
   {
