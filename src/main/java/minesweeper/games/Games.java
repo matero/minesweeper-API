@@ -25,6 +25,7 @@ package minesweeper.games;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
@@ -44,9 +46,9 @@ import java.util.List;
 @RequestMapping(path = "/games", produces = "application/json; charset=utf-8")
 class Games
 {
-  private final Service service;
+  private final GamesService service;
 
-  Games(final Service service) { this.service = service; }
+  Games(final GamesService service) { this.service = service; }
 
   /**
    * Gets all the {@link Game}s (being?) played.
@@ -68,9 +70,13 @@ class Games
    */
   @ApiOperation("Creates a Game for desired level.")
   @PostMapping("create/{level}")
-  Game create(@ApiParam(value = "level of the Game to create.", required = true, readOnly = true) @PathVariable final GameLevel level)
+  Game create(
+      @ApiParam(value = "level of the Game to create.", required = true, readOnly = true) @PathVariable final GameLevel level,
+      final HttpServletResponse response)
   {
-    return service.createGameOfLevel(level);
+    final var game = service.createGameOfLevel(level);
+    response.setStatus(HttpStatus.CREATED.value());
+    return game;
   }
 
   /**
@@ -86,9 +92,12 @@ class Games
   Game create(
       @ApiParam(value = "rows of the Game's board.", readOnly = true) @RequestParam @NotNull @Positive final Integer rows,
       @ApiParam(value = "columns of the Game's board.", readOnly = true) @RequestParam @NotNull @Positive final Integer columns,
-      @ApiParam(value = "mines in the Game's board.", readOnly = true) @RequestParam @NotNull @Positive final Integer mines)
+      @ApiParam(value = "mines in the Game's board.", readOnly = true) @RequestParam @NotNull @Positive final Integer mines,
+      final HttpServletResponse response)
   {
-    return service.createCustomGame(rows, columns, mines);
+    final var game = service.createCustomGame(rows, columns, mines);
+    response.setStatus(HttpStatus.CREATED.value());
+    return game;
   }
 
   /**

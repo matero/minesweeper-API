@@ -53,16 +53,16 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
 {
   private static final int[][] TEST_BOARD = {{0, 1, 9}, {0, 1, 1}, {0, 0, 0}};
 
-  Repository repo;
+  GamesRepository repo;
 
-  @BeforeEach void setup() { repo = new Repository(db()); }
+  @BeforeEach void setup() { repo = new GamesRepository(db()); }
 
   @Test void when_no_Game_exists_for_provided_id_then_findById_should_fail_with_NotFound()
   {
     //given
     noGamesAreDefined();
 
-    //when findById should fail with NotFound
+    //expect
     final var notFound = assertThrows(NotFound.class, () -> repo.findById(1));
     assertEquals("No Game is defined with id=1", notFound.getMessage());
   }

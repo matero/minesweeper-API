@@ -23,14 +23,18 @@
  */
 package minesweeper;
 
+import minesweeper.accounts.EmailAlreadyUsed;
 import minesweeper.games.AlreadyFinished;
+import minesweeper.security.BadCredentialsProvided;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.lang.NonNull;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -51,6 +55,22 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler
 
   private static final int JSON_ERROR_DESCRIPTION_START = "JSON parse error:".length();
   private static final String TYPE_NAME_START = " of type `";
+  private static final Map<String, Object> ILLEGAL_CREDENTIALS = Map.of("errors", "Bad credentials");
+  private static final Map<String, Object> INTERNAL_SERVER_ERROR = Map.of("errors", "Server can't provide an accurate response right now, please try again later.");
+
+  private final boolean inProduction;
+
+  GlobalExceptionHandler(final Environment environment) { inProduction = isInProduction(environment); }
+
+  private static boolean isInProduction(final Environment environment)
+  {
+    for (final var activeProfile : environment.getActiveProfiles()) {
+      if ("production".equalsIgnoreCase(activeProfile)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   @ExceptionHandler(ConstraintViolationException.class) @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY) @ResponseBody @NonNull
   Map<String, Object> onConstraintValidationException(final ConstraintViolationException e)
@@ -139,10 +159,39 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler
     return Map.of("errors", e.getMessage());
   }
 
-  @ExceptionHandler(IllegalStateException.class) @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR) @ResponseBody @NonNull
-  Map<String, Object> onIllegalState(final IllegalStateException e)
+  @ExceptionHandler(BadCredentialsProvided.class) @ResponseStatus(HttpStatus.FORBIDDEN) @ResponseBody @NonNull
+  Map<String, Object> onBadCredentialsProvided(final BadCredentialsProvided e)
   {
     return Map.of("errors", e.getMessage());
+  }
+
+  @ExceptionHandler(EmailAlreadyUsed.class) @ResponseStatus(HttpStatus.CONFLICT) @ResponseBody @NonNull
+  Map<String, Object> onEmailAlreadyUsed(final EmailAlreadyUsed e)
+  {
+    return Map.of("errors", e.getMessage());
+  }
+
+  @ExceptionHandler(UsernameNotFoundException.class) @ResponseStatus(HttpStatus.FORBIDDEN) @ResponseBody @NonNull
+  Map<String, Object> onUsernameNotFoundException(final UsernameNotFoundException e)
+  {
+    return ILLEGAL_CREDENTIALS;
+  }
+
+  @ExceptionHandler(RuntimeException.class) @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR) @ResponseBody @NonNull
+  Map<String, Object> onRuntimeException(final RuntimeException e)
+  {
+    LOGGER.error("INTERNAL SERVER ERROR", e);
+    if (inProduction) {
+      contactDevOps(e);
+      return INTERNAL_SERVER_ERROR;
+    } else {
+      return Map.of("errors", e.getMessage());
+    }
+  }
+
+  private void contactDevOps(final RuntimeException e)
+  {
+    // contact dev op by configured method advising him of the uncaught exception.
   }
 }
 

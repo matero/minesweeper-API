@@ -29,6 +29,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Array;
 import java.sql.SQLException;
@@ -39,17 +40,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-@org.springframework.stereotype.Repository
-class Repository
+@Repository
+class GamesRepository
 {
   private static final List<SqlParameter> BOARD_PARAMETER = List.of(new SqlParameter(Types.ARRAY, "board"));
 
   private final JdbcTemplate db;
   private final PreparedStatementCreatorFactory insertIntoGames;
 
-  @Autowired Repository(final JdbcTemplate db) { this(db, makeInsertIntoGames()); }
+  @Autowired GamesRepository(final JdbcTemplate db) { this(db, makeInsertIntoGames()); }
 
-  Repository(final JdbcTemplate db, final PreparedStatementCreatorFactory insertIntoGames)
+  GamesRepository(final JdbcTemplate db, final PreparedStatementCreatorFactory insertIntoGames)
   {
     this.db = db;
     this.insertIntoGames = insertIntoGames;

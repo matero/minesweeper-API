@@ -30,13 +30,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @org.springframework.stereotype.Service
-class Service
+class GamesService
 {
-  private static final Logger LOGGER = LoggerFactory.getLogger(Service.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(GamesService.class);
 
-  private final Repository repository;
+  private final GamesRepository repository;
 
-  Service(final Repository repository) { this.repository = repository; }
+  GamesService(final GamesRepository repository) { this.repository = repository; }
 
   @Transactional(readOnly = true) List<Game> findAll()
   {
