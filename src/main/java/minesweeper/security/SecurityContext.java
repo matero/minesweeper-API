@@ -62,6 +62,8 @@ public class SecurityContext extends WebSecurityConfigurerAdapter
                 .antMatchers("/register").anonymous()
                 // authenticate endpoint
                 .antMatchers("/login").anonymous()
+                // solution documentation
+                .antMatchers("/", "/index.html").permitAll()
                 // database documentation
                 .antMatchers("/db-docs/**").permitAll()
                 // swagger3 endpoints

@@ -4,7 +4,7 @@
       <sequence increment="1" name="games_id_seq" startValue="1"/>
    </sequences>
    <tables>
-      <table name="accounts" numRows="3" remarks="Accounts that can access **minesweeper** system." schema="minesweeper" type="TABLE">
+      <table name="accounts" numRows="0" remarks="Accounts that can access **minesweeper** system." schema="minesweeper" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="email" nullable="false" remarks="Email of the **minesweeper** user, every action or calculation related&#10;to Accounts is performed using its `email`." size="255" type="varchar" typeCode="12">
             <child column="owner" foreignKey="games_owner_fkey" implied="false" onDeleteCascade="false" schema="minesweeper" table="games"/>
          </column>
@@ -15,7 +15,7 @@
             <column ascending="true" name="email"/>
          </index>
       </table>
-      <table name="games" numRows="5" remarks="Games played or being, by now they only have a unique ID and the board definition" schema="minesweeper" type="TABLE">
+      <table name="games" numRows="0" remarks="Games played or being, by now they only have a unique ID and the board definition" schema="minesweeper" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('games_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="Unique ID of the minesweeper game" size="10" type="serial" typeCode="4"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="owner" nullable="false" remarks="Accounts which is playing the game, no one else should be able to access the game." size="255" type="varchar" typeCode="12">
             <parent column="email" foreignKey="games_owner_fkey" implied="false" onDeleteCascade="false" schema="minesweeper" table="accounts"/>
@@ -31,7 +31,7 @@
             <column ascending="true" name="owner"/>
          </index>
       </table>
-      <table name="playtimes" numRows="1" remarks="Time elapsed playing Games" schema="minesweeper" type="TABLE">
+      <table name="playtimes" numRows="0" remarks="Time elapsed playing Games" schema="minesweeper" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="game" nullable="false" remarks="Unique ID of the minesweeper game for which the playing time is being tracked." size="10" type="int4" typeCode="4"/>
          <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="6" id="1" name="startedat" nullable="false" remarks="Instant in which the game was started or resumed." size="29" type="timestamp" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="finishedat" nullable="true" remarks="Instant in which the game was finished or paused." size="29" type="timestamp" typeCode="93"/>

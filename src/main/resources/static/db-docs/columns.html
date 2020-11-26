@@ -105,45 +105,6 @@
                 <script>
                     var tableData = [
     {
-        "tableName": "accounts",
-        "tableType": "Table",
-        "keyClass": "",
-        "keyTitle": "",
-        "name": "password",
-        "type": "varchar",
-        "length": 255,
-        "nullable": "",
-        "autoUpdated": "",
-        "defaultValue": "null",
-        "comments": "<p>Hashed form of the password assigned to the user. At this level we<br />\ndon&rsquo;t know which kind of algorithm is used to perform the hashing.<\/p>"
-    },
-    {
-        "tableName": "playtimes",
-        "tableType": "Table",
-        "keyClass": "primaryKey",
-        "keyTitle": "Primary Key",
-        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'><\/i>game",
-        "type": "int4",
-        "length": 10,
-        "nullable": "",
-        "autoUpdated": "",
-        "defaultValue": "null",
-        "comments": "<p>Unique ID of the minesweeper game for which the playing time is being tracked.<\/p>"
-    },
-    {
-        "tableName": "playtimes",
-        "tableType": "Table",
-        "keyClass": "primaryKey",
-        "keyTitle": "Primary Key",
-        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'><\/i>startedat",
-        "type": "timestamp",
-        "length": 29,
-        "nullable": "",
-        "autoUpdated": "",
-        "defaultValue": "CURRENT_TIMESTAMP",
-        "comments": "<p>Instant in which the game was started or resumed.<\/p>"
-    },
-    {
         "tableName": "games",
         "tableType": "Table",
         "keyClass": "",
@@ -157,30 +118,17 @@
         "comments": "<p>Instant in which the game was created<\/p>"
     },
     {
-        "tableName": "playtimes",
-        "tableType": "Table",
-        "keyClass": "",
-        "keyTitle": "",
-        "name": "finishedat",
-        "type": "timestamp",
-        "length": 29,
-        "nullable": "√",
-        "autoUpdated": "",
-        "defaultValue": "null",
-        "comments": "<p>Instant in which the game was finished or paused.<\/p>"
-    },
-    {
         "tableName": "accounts",
         "tableType": "Table",
-        "keyClass": "",
-        "keyTitle": "",
-        "name": "name",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'><\/i>email",
         "type": "varchar",
         "length": 255,
         "nullable": "",
         "autoUpdated": "",
         "defaultValue": "null",
-        "comments": "<p>Value defined by the user to be named in every interaction with him.<\/p>"
+        "comments": "<p>Email of the <strong>minesweeper<\/strong> user, every action or calculation related<br />\nto Accounts is performed using its <code>email<\/code>.<\/p>"
     },
     {
         "tableName": "games",
@@ -194,45 +142,6 @@
         "autoUpdated": "",
         "defaultValue": "null",
         "comments": "<p>Accounts which is playing the game, no one else should be able to access the game.<\/p>"
-    },
-    {
-        "tableName": "games",
-        "tableType": "Table",
-        "keyClass": "",
-        "keyTitle": "",
-        "name": "status",
-        "type": "gamestatus",
-        "length": 2147483647,
-        "nullable": "",
-        "autoUpdated": "",
-        "defaultValue": "'CREATED'::gamestatus",
-        "comments": "<p>Current status of the game<\/p>"
-    },
-    {
-        "tableName": "games",
-        "tableType": "Table",
-        "keyClass": "primaryKey",
-        "keyTitle": "Primary Key",
-        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'><\/i>id",
-        "type": "serial",
-        "length": 10,
-        "nullable": "",
-        "autoUpdated": "√",
-        "defaultValue": "nextval('games_id_seq'::regclass)",
-        "comments": "<p>Unique ID of the minesweeper game<\/p>"
-    },
-    {
-        "tableName": "accounts",
-        "tableType": "Table",
-        "keyClass": "primaryKey",
-        "keyTitle": "Primary Key",
-        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'><\/i>email",
-        "type": "varchar",
-        "length": 255,
-        "nullable": "",
-        "autoUpdated": "",
-        "defaultValue": "null",
-        "comments": "<p>Email of the <strong>minesweeper<\/strong> user, every action or calculation related<br />\nto Accounts is performed using its <code>email<\/code>.<\/p>"
     },
     {
         "tableName": "games",
@@ -259,6 +168,97 @@
         "autoUpdated": "",
         "defaultValue": "null",
         "comments": "<p>Instant in which the game was finished (the status passed to <code>WON<\/code> or <code>LOOSE<\/code>)<\/p>"
+    },
+    {
+        "tableName": "playtimes",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'><\/i>startedat",
+        "type": "timestamp",
+        "length": 29,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "CURRENT_TIMESTAMP",
+        "comments": "<p>Instant in which the game was started or resumed.<\/p>"
+    },
+    {
+        "tableName": "playtimes",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "finishedat",
+        "type": "timestamp",
+        "length": 29,
+        "nullable": "√",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>Instant in which the game was finished or paused.<\/p>"
+    },
+    {
+        "tableName": "games",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'><\/i>id",
+        "type": "serial",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "√",
+        "defaultValue": "nextval('games_id_seq'::regclass)",
+        "comments": "<p>Unique ID of the minesweeper game<\/p>"
+    },
+    {
+        "tableName": "accounts",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "password",
+        "type": "varchar",
+        "length": 255,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>Hashed form of the password assigned to the user. At this level we<br />\ndon&rsquo;t know which kind of algorithm is used to perform the hashing.<\/p>"
+    },
+    {
+        "tableName": "games",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "status",
+        "type": "gamestatus",
+        "length": 2147483647,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "'CREATED'::gamestatus",
+        "comments": "<p>Current status of the game<\/p>"
+    },
+    {
+        "tableName": "playtimes",
+        "tableType": "Table",
+        "keyClass": "primaryKey",
+        "keyTitle": "Primary Key",
+        "name": "<i class='icon ion-key iconkey' style='padding-left: 5px;'><\/i>game",
+        "type": "int4",
+        "length": 10,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>Unique ID of the minesweeper game for which the playing time is being tracked.<\/p>"
+    },
+    {
+        "tableName": "accounts",
+        "tableType": "Table",
+        "keyClass": "",
+        "keyTitle": "",
+        "name": "name",
+        "type": "varchar",
+        "length": 255,
+        "nullable": "",
+        "autoUpdated": "",
+        "defaultValue": "null",
+        "comments": "<p>Value defined by the user to be named in every interaction with him.<\/p>"
     }
 ];
                     var config = {
