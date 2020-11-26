@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<database name="minesweeper" schema="minesweeper" type="PostgreSQL - 12.3">
+   <sequences>
+      <sequence increment="1" name="games_id_seq" startValue="1"/>
+   </sequences>
+   <tables>
+      <table name="accounts" numRows="3" remarks="Accounts that can access **minesweeper** system." schema="minesweeper" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="email" nullable="false" remarks="Email of the **minesweeper** user, every action or calculation related&#10;to Accounts is performed using its `email`." size="255" type="varchar" typeCode="12">
+            <child column="owner" foreignKey="games_owner_fkey" implied="false" onDeleteCascade="false" schema="minesweeper" table="games"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="name" nullable="false" remarks="Value defined by the user to be named in every interaction with him." size="255" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="password" nullable="false" remarks="Hashed form of the password assigned to the user. At this level we&#10;don't know which kind of algorithm is used to perform the hashing." size="255" type="varchar" typeCode="12"/>
+         <primaryKey column="email" sequenceNumberInPK="1"/>
+         <index name="accounts_pkey" unique="true">
+            <column ascending="true" name="email"/>
+         </index>
+      </table>
+      <table name="games" numRows="5" remarks="Games played or being, by now they only have a unique ID and the board definition" schema="minesweeper" type="TABLE">
+         <column autoUpdated="true" defaultValue="nextval('games_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="Unique ID of the minesweeper game" size="10" type="serial" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="owner" nullable="false" remarks="Accounts which is playing the game, no one else should be able to access the game." size="255" type="varchar" typeCode="12">
+            <parent column="email" foreignKey="games_owner_fkey" implied="false" onDeleteCascade="false" schema="minesweeper" table="accounts"/>
+         </column>
+         <column autoUpdated="false" defaultValue="'CREATED'::gamestatus" digits="0" id="2" name="status" nullable="false" remarks="Current status of the game" size="2147483647" type="gamestatus" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="6" id="3" name="creation" nullable="false" remarks="Instant in which the game was created" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="finishedat" nullable="true" remarks="Instant in which the game was finished (the status passed to `WON` or `LOOSE`)" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="board" nullable="false" remarks="Cells defined for the game's board" size="10" type="_int4" typeCode="2003"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <primaryKey column="owner" sequenceNumberInPK="2"/>
+         <index name="games_pkey" unique="true">
+            <column ascending="true" name="id"/>
+            <column ascending="true" name="owner"/>
+         </index>
+      </table>
+      <table name="playtimes" numRows="1" remarks="Time elapsed playing Games" schema="minesweeper" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="game" nullable="false" remarks="Unique ID of the minesweeper game for which the playing time is being tracked." size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="CURRENT_TIMESTAMP" digits="6" id="1" name="startedat" nullable="false" remarks="Instant in which the game was started or resumed." size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="finishedat" nullable="true" remarks="Instant in which the game was finished or paused." size="29" type="timestamp" typeCode="93"/>
+         <primaryKey column="game" sequenceNumberInPK="1"/>
+         <primaryKey column="startedat" sequenceNumberInPK="2"/>
+         <index name="playtimes_pkey" unique="true">
+            <column ascending="true" name="game"/>
+            <column ascending="true" name="startedat"/>
+         </index>
+      </table>
+   </tables>
+   <routines>
+      <routine dataAccess="MODIFIES" deterministic="false" name="pausegame" securityType="INVOKER" type="PROCEDURE">
+         <comment><![CDATA[Marks a game as `PAUSED`.
+
+It assumes that preconditions are accomplished (the game exists, it is in `PLAYING` status, and it has
+**ONE AND ONLY ONE** PlayTimes unfinished).
+
+#### Parameters
+1. `gameId`: unique identifier of the game to pause.
+]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+BEGIN
+    UPDATE minesweeper.Games SET status = 'PAUSED' WHERE id = gameId;
+    UPDATE minesweeper.PlayTimes SET finishedAt = current_timestamp WHERE game = gameId AND finishedAt IS NULL;
+END; ]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="updategame" securityType="INVOKER" type="PROCEDURE">
+         <comment><![CDATA[Updates a game
+to a new status and board.
+
+It assumes that preconditions are accomplished (the game exists, it is not transitioning to `PAUSED` status -see
+pauseGame for that-, and is not in WON or LOOSE status).
+
+#### Parameters
+1. `gameId`: unique identifier of the game to pause.
+2. `gameStatus`: status to which the game is transitioning.
+3. `gameBoard`: definition of the desired game cells board.
+]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+BEGIN
+    CASE gameStatus
+        WHEN 'PLAYING' THEN
+
+            UPDATE minesweeper.Games
+            SET status = gameStatus, board = gameBoard
+            WHERE id = gameId;
+
+            INSERT INTO minesweeper.playtimes(game) VALUES (gameId);
+
+        WHEN 'WON', 'LOOSE' THEN
+
+            UPDATE minesweeper.Games
+            SET status = gameStatus, board = gameBoard, finishedAt = current_timestamp
+            WHERE id = gameId;
+
+            UPDATE minesweeper.PlayTimes
+            SET finishedAt = current_timestamp
+            WHERE game = gameId AND finishedAt IS NULL;
+
+            IF NOT FOUND THEN
+                INSERT INTO minesweeper.playtimes(game, startedAt, finishedAt)
+                VALUES (gameId, current_timestamp, current_timestamp);
+            END IF;
+
+        ELSE
+            RAISE 'Unexpected gameStatus "%"', gameStatus::text
+                USING ERRCODE = 'invalid_parameter_value',
+                         HINT = 'Only PLAYING / WON / LOOSE GameStatus are allowed.';
+    END CASE;
+END; ]]></definition>
+      </routine>
+   </routines>
+</database>

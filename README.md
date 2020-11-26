@@ -1,4 +1,7 @@
+# READ Solution.md to see solution design & assumed constraints.
+ 
 # minesweeper-API
+
 API test
 
 We ask that you complete the following challenge to evaluate your development skills. Please use the programming language and framework discussed during your interview to accomplish the following task.

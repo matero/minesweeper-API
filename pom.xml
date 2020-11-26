@@ -254,6 +254,24 @@
         <artifactId>maven-site-plugin</artifactId>
         <version>3.9.1</version>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.2</version>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <includeScope>compile</includeScope>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -298,6 +316,46 @@
                   <goal>display-plugin-updates</goal>
                 </goals>
                 <phase>compile</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <!-- Configuration of the development profile -->
+    <profile>
+      <id>docDB</id>
+      <properties>
+        <!-- no tests are run -->
+        <skipIntegrationTests>true</skipIntegrationTests>
+        <skipUnitTests>true</skipUnitTests>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.6.0</version>
+            <executions>
+              <execution>
+                <id>generate-db-docs</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>java</executable>
+                  <arguments>
+                    <argument>-jar</argument>
+                    <argument>${project.basedir}/schemaspy/schemaspy.jar</argument>
+                    <argument>-configFile</argument>
+                    <argument>${project.basedir}/schemaspy/schemaspy.properties</argument>
+                    <argument>-o</argument>
+                    <argument>${project.basedir}/src/main/resources/static/db-docs</argument>
+                    <argument>-dp</argument>
+                    <argument>${project.build.directory}/dependency/postgresql-42.2.16.jar</argument>
+                  </arguments>
+                </configuration>
               </execution>
             </executions>
           </plugin>

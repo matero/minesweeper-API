@@ -1,0 +1,5 @@
+date=2020-11-25 22:31:29-0300
+os=Linux 5.4.78-1-MANJARO
+schemaspy-version=6.1.0
+schemaspy-build=6.1.0.41 2019-09-17 21:52:57
+diagramImplementation=Graphviz dot 2.44
