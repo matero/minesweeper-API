@@ -32,12 +32,26 @@ import org.springframework.boot.autoconfigure.flyway.FlywayDataSource;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import springfox.documentation.builders.PathSelectors;
+import springfox.documentation.builders.RequestHandlerSelectors;
+import springfox.documentation.service.ApiKey;
+import springfox.documentation.service.AuthorizationScope;
+import springfox.documentation.service.SecurityReference;
+import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spi.service.contexts.SecurityContext;
+import springfox.documentation.spring.web.plugins.Docket;
 
 import javax.sql.DataSource;
+import java.util.List;
+
+import static java.util.function.Predicate.not;
+import static springfox.documentation.builders.PathSelectors.ant;
 
 @Configuration
 class WebConfig implements WebMvcConfigurer
@@ -96,4 +110,38 @@ class DatabaseConfig
 final class Flyway__7_2__MigrationStrategy implements FlywayMigrationStrategy
 {
   @Override public void migrate(final Flyway flyway) { flyway.migrate(); }
+}
+
+@Configuration
+@Import(springfox.bean.validators.configuration.BeanValidatorPluginsConfiguration.class)
+class SwaggerConfiguration
+{
+  @Bean Docket docket()
+  {
+    return new Docket(DocumentationType.SWAGGER_2)
+               .ignoredParameterTypes(AuthenticationPrincipal.class)
+               .select()
+               .apis(not(RequestHandlerSelectors.basePackage("org.springframework.boot")))
+               .paths(not(PathSelectors.regex("/error.*")))
+               .build()
+               .securitySchemes(List.of(new ApiKey("Bearer", "Authorization", "header")))
+               .securityContexts(List.of(securityContext()));
+  }
+
+  private SecurityContext securityContext()
+  {
+    return SecurityContext.builder()
+                          .securityReferences(defaultAuth())
+                          .forPaths(ant("/swagger-ui/**"))
+                          .forPaths(ant("/webjars/**"))
+                          .forPaths(ant("/swagger-resources/**"))
+                          .forPaths(ant("/v3/api-docs/**"))
+                          .build();
+  }
+
+  List<SecurityReference> defaultAuth()
+  {
+    final AuthorizationScope[] authorizationScopes = {new AuthorizationScope("global", "accessEverything")};
+    return List.of(new SecurityReference("anyone", authorizationScopes));
+  }
 }

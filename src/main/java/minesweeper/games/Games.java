@@ -25,6 +25,7 @@ package minesweeper.games;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.Authorization;
 import minesweeper.security.AuthenticationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -61,7 +62,8 @@ class Games
    *
    * @return the list of known {@link Game}s, sorted by creation time.
    */
-  @ApiOperation("Gets all the Games (being?) played by the active account, sorted by creation time.")
+  @ApiOperation(value = "Gets all the Games (being?) played by the active account, sorted by creation time.",
+                authorizations = @Authorization("Bearer"))
   @GetMapping
   List<Game> index()
   {
@@ -74,7 +76,7 @@ class Games
    * @param level {@link GameLevel} of the {@link Game} to create.
    * @return a newly created {@link Game}, with all its cells obfuscated.
    */
-  @ApiOperation("Creates a Game for desired level.")
+  @ApiOperation(value = "Creates a Game for desired level.", authorizations = @Authorization("Bearer"))
   @PostMapping("create/{level}")
   Game create(
       @ApiParam(value = "level of the Game to create.", required = true, readOnly = true) @PathVariable final GameLevel level,
@@ -93,7 +95,7 @@ class Games
    * @param mines   mines in the {@link Game}'s board.
    * @return a newly created {@link Game}, with all its cells obfuscated.
    */
-  @ApiOperation("Creates a Game with custom configuration.")
+  @ApiOperation(value = "Creates a Game with custom configuration.", authorizations = @Authorization("Bearer"))
   @PostMapping("create/custom")
   Game create(
       @ApiParam(value = "rows of the Game's board.", readOnly = true) @RequestParam @NotNull @Positive final Integer rows,
@@ -114,12 +116,13 @@ class Games
    * @param column column of the {@link Game}'s board's cell to reveal.
    * @return {@link Game}, cell revealed. If it was a mine game is marked as FINISHED.
    */
-  @ApiOperation("""
-                Reveals a Game's board cell.
-                                        
-                If the game wasn't started at the time, then it is marked as PLAYING.
-                If the cell was already revealed, nothing happens.
-                """)
+  @ApiOperation(value = """
+                        Reveals a Game's board cell.
+                                                
+                        If the game wasn't started at the time, then it is marked as PLAYING.
+                        If the cell was already revealed, nothing happens.
+                        """,
+                authorizations = @Authorization("Bearer"))
   @PutMapping("{gameId}/reveal/{row}/{column}")
   Game reveal(
       @ApiParam(value = "gameId of the game on which the cell must be revealed.", readOnly = true) @PathVariable final int gameId,
@@ -137,13 +140,14 @@ class Games
    * @param column column of the {@link Game}'s board's cell to flag.
    * @return {@link Game}, with cell flagged.
    */
-  @ApiOperation("""
-                Flags a Game's board cell.
-                                        
-                If the game wasn't started at the time, then it is marked as PLAYING.
-                If the cell was already revealed, nothing happens.
-                If the cell was already flagged, nothing happens.
-                """)
+  @ApiOperation(value = """
+                        Flags a Game's board cell.
+                                                
+                        If the game wasn't started at the time, then it is marked as PLAYING.
+                        If the cell was already revealed, nothing happens.
+                        If the cell was already flagged, nothing happens.
+                        """,
+                authorizations = @Authorization("Bearer"))
   @PutMapping("{gameId}/flag/{row}/{column}")
   Game flag(
       @ApiParam(value = "gameId of the game on which the cell must be flagged.", readOnly = true) @PathVariable final int gameId,
@@ -161,13 +165,14 @@ class Games
    * @param column column of the {@link Game}'s board's cell to un-flag.
    * @return {@link Game}, with cell un-flagged.
    */
-  @ApiOperation("""
-                Un-flags a Game's board cell.
-                                        
-                If the game wasn't started at the time, then it is marked as PLAYING.
-                If the cell was already revealed, nothing happens.
-                If the cell wasn't flagged, nothing happens.   
-                """)
+  @ApiOperation(value = """
+                        Un-flags a Game's board cell.
+                                                
+                        If the game wasn't started at the time, then it is marked as PLAYING.
+                        If the cell was already revealed, nothing happens.
+                        If the cell wasn't flagged, nothing happens.   
+                        """,
+                authorizations = @Authorization("Bearer"))
   @PutMapping("{gameId}/unflag/{row}/{column}")
   Game unflag(
       @ApiParam(value = "gameId of the game on which the cell must be flagged.", readOnly = true) @PathVariable final int gameId,
@@ -183,13 +188,14 @@ class Games
    * @param gameId unique gameId of the {@link Game} to pause.
    * @return the {@link Game}, after the pause is done.
    */
-  @ApiOperation("""
-                Pauses a Game.
-                                        
-                If the game wasn't started at the time, then nothing is done.
-                If the game was finished, an error advicing that game is finished is reported with code 422.
-                If the game was being played, then its status is changed and the game clock is paused.
-                """)
+  @ApiOperation(value = """
+                        Pauses a Game.
+                                                
+                        If the game wasn't started at the time, then nothing is done.
+                        If the game was finished, an error advicing that game is finished is reported with code 422.
+                        If the game was being played, then its status is changed and the game clock is paused.
+                        """,
+                authorizations = @Authorization("Bearer"))
   @PutMapping("{gameId}/pause")
   Game pause(@ApiParam(value = "gameId of the game on which the cell must be flagged.", readOnly = true) @PathVariable final int gameId)
   {

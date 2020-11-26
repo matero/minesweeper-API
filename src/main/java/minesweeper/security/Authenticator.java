@@ -1,10 +1,9 @@
 package minesweeper.security;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.Authorization;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,12 +28,7 @@ class Authenticator
     this.authenticationService = authenticationService;
   }
 
-  @Operation(summary = "Authenticate a registered user.",
-             security = @SecurityRequirement(name = "bearerAuth"),
-             responses = {
-                 @ApiResponse(description = "The token to interact with endpoints if all goes well.", responseCode = "200"),
-                 @ApiResponse(description = "Message 'Bad credentials.' when the credentials doesn't identify an active user.", responseCode = "401")
-             })
+  @ApiOperation(value = "Authenticate a registered user.")
   @PostMapping("/login")
   public AuthenticationToken login(final @RequestBody @Valid Credentials credentials)
   {
@@ -43,13 +37,7 @@ class Authenticator
     return new AuthenticationToken(token);
   }
 
-  @Operation(
-      summary = "Refresh the authentication token of a user.",
-      security = @SecurityRequirement(name = "bearerAuth"),
-      responses = {
-          @ApiResponse(description = "The token to interact with endpoints if all goes well.", responseCode = "200"),
-          @ApiResponse(description = "Message 'Bad credentials.' when the credentials doesn't identify an active user.", responseCode = "401")
-      })
+  @ApiOperation(value = "Refresh the authentication token of a user.", authorizations = @Authorization("Bearer"))
   @PostMapping("/refresh")
   public AuthenticationToken refresh()
   {
