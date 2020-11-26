@@ -1,0 +1,112 @@
+<h1><a href="https://matero-minesweeper.herokuapp.com">Deviget - Minesweeper challenge</a></h1>
+<p>I used the challenge to force me to try out some good practices that I could not use in my last professional steps. Package-by-feature, immutability, last spring-boot versions, using plain SQL with stored procedures, limit abstraction visibility and object creation.</p>
+<p>It seemed easy while I was thinking about it, but it was harder than expected.</p>
+<p>Maybe using common practices and tools (which are already in my toolbox) this could be done quicker, but I needed to try it out :), it was a challenge after all, so make it a complete challenge.</p>
+<h2>Architecture</h2>
+<p>The application can be seen in 3 tiers:</p>
+<ol>
+<li>
+<p><strong><code>persistence</code></strong>: <code>JdbcTemplate</code> based repositories which interacts with postgresql db.</p>
+</li>
+<li>
+<p><strong><code>business logic</code></strong>: services and domain objects that process the users actions to work with <strong>games</strong> and <strong>accounts</strong>, using <code>repositories</code> to persist changes or fetch data.</p>
+</li>
+<li>
+<p><strong><code>web api</code></strong>: controllers implementing the <code>REST API</code> to play <em>Minesweeper</em>.</p>
+</li>
+</ol>
+<h2>Game constraints</h2>
+<ul>
+<li>
+<p>To start playing you must register an Account at <code>/register</code>. Once you have registered the account, you will automatically have a JWT token to interact with the REST API. Only the email is validated, the strength of the password is not checked, I could use something like <a href="http://www.passay.org/">passay</a> and create a validator&hellip; but I think it exceeds the challenge, for the same reason no registration confirmation is done.</p>
+</li>
+<li>
+<p>Once you have a JWT token (you are logged in, or just created your account) you can create games.</p>
+</li>
+<li>
+<p>At that moment, the game is not considered as being played, but created. Once you take an action on it (flag or reveal cell, it would track the time spent in the game).</p>
+</li>
+<li>
+<p>Then you can <code>PAUSE</code> the game, or keep playing until you <code>WON</code> or <code>LOOSE</code> the game.</p>
+</li>
+<li>
+<p>Every time you take an action on the game, the api gives you the complete status of the game, with revealed cells and unrevealed ones as a matrix, time played, columns, rows, mines in the board, etc.</p>
+</li>
+<li>
+<p>at any time you can query for all your games, but you never has access to other accounts games.</p>
+</li>
+</ul>
+<h2>Design Principles</h2>
+<h3>Immutability</h3>
+<p>No entity in the system should be mutable unless an explicit requirement exists. This, I think, give us a code easier to read, maintain and evolve.</p>
+<p>For example, <code>Game</code> which is a key concept on this challenge is immutable, this forced the definition of a game builder, game changes, service and repository which work with games changes instead of complete game states.</p>
+<h3>Package by feature</h3>
+<p>Each package correspond to important, high-level aspects of the challenge. In this case, we have:</p>
+<ul>
+<li><code>minesweeper</code>: global definitions, common to the system.</li>
+<li><code>minesweeper.accounts</code>: definitions related to Account to play games.</li>
+<li><code>minesweeper.games</code>: Games related definitions.</li>
+<li><code>minesweeper.games</code>: authentication and authorization definitons, using JWT.</li>
+</ul>
+<p>This give us:</p>
+<ul>
+<li>
+<p><em>Modularity</em> packages have high cohesion, high modularity, and low coupling between packages.</p>
+</li>
+<li>
+<p><em>Easier Code Navigation</em> Maintenance programmers need to do a lot less searching for items, since all items needed for a given task are usually in the same directory.</p>
+</li>
+<li>
+<p><em>Higher Level of Abstraction</em> It makes it easier to think about a problem, and emphasizes fundamental services over implementation details. As a direct benefit of being at a high level of abstraction, the application becomes more self-documenting: the overall size of the application is communicated by the number of packages, and the basic features are communicated by the package names.</p>
+</li>
+<li>
+<p><em>Separates Both Features and Layers</em> The package-by-feature style still honors the idea of separating layers, but that separation is implemented using separate classes (<code>GamesService</code> and <code>GamesRepository</code>).</p>
+</li>
+<li>
+<p><em>Minimizes Scope</em> Allows some classes to decrease their scope from public to package-private. This is a significant change, and will help to minimize ripple effects.</p>
+</li>
+<li>
+<p><em>Better Growth Style</em> The number of classes within each package remains limited to the items related to a specific feature. If a package becomes too large, it may be refactored in a natural way into two or more packages.</p>
+</li>
+</ul>
+<h2>Security</h2>
+<p>JWT is used to authenticate and authorize the application endpoints. No roles where defined other than <code>user</code>, again because I thought it would exceed the scope of the challenge. No administration requirements exists, so, why bother?</p>
+<h2>Details</h2>
+<h3>Persistence details</h3>
+<p>Avoided the use of <code>ORM</code>s as hibernate or JPA, mainly because the board of the game, which is basically a matrix and would make the mapping and operations like a horror movie. So the simpler but yet powerful <a href="https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html">Spring JdbcTemplate</a></p>
+<p>Also, to avoid doing multiple related calls (like when updating the state of the game and tracking the time played), I preferred to use postgresql stored procedures which seemed like a simpler way. JdbcTemplate and its exception translation provides an easier way to report key duplication (email already used) or element not found errors.</p>
+<p>To describe database schema, <a href="https://www.postgresql.org/docs/12/sql-comment.html">postgresql comments</a> <strong>+</strong> <a href="http://schemaspy.org/">SchemmaSpy</a> <strong>+</strong> <a href="https://www.mojohaus.org/exec-maven-plugin/">exec-maven-plugin</a> were used to generate HTML pages that can be accessed at <a href="https://matero-minesweeper.herokuapp.com/db-docs/index.html">minesweeper db-docs</a>.</p>
+<p>Finally, but not less important, <a href="https://flywaydb.org/">flyway</a> is the tool selected to carry on the DB migrations.</p>
+<p>The database used is, as already stated, postgres in its version <code>12</code>, because thats the current version usable at <a href="https://www.heroku.com/postgres">heroku</a>. Used the opportunity to play with postgres enums, which were at my radar from long time ago :).</p>
+<h3>Business logic details</h3>
+<p>At its core, not all related logic is solve at Service classes. Some logic is easier to read and evolve if its defined in the domain objects (like the case of <code>minesweeper.Game</code>) and in such cases the service opens the transactions, checks preconditions create the according results.</p>
+<p>As Java still doesn&rsquo;t have something like scala or kotlin <code>object</code>, many times were something like a singleton appears in the design, and enums can&rsquo;t be used, I use the recommended java way: an inner class with a class constant representing the singleton. Like for example:</p>
+<pre><code class="language-java">public final class BadCredentialsProvided extends MinesweeperException
+{
+  private BadCredentialsProvided() { super(&quot;Bad credentials.&quot;); }
+
+  static final class Unique
+  {
+    static final BadCredentialsProvided INSTANCE = new BadCredentialsProvided();
+  }
+}
+</code></pre>
+<p><strong>NEVER</strong> a service has knowledge of what happens in a repository or who is his caller, it only deals with transactions, precondiotions, and business related logic (minesweeper game and accounts creation this case). <strong>IT CAN</strong> assume that certain patterns corresponds to a model, like it daes to check that an email represents a game owner, in:</p>
+<pre><code class="language-java">Game getGameWithId(final int gameId, final String gameOwner)
+{
+  final var game = get(gameId);
+  if (!game.owner.equals(gameOwner)) {
+    throw new AccessDeniedException(&quot;You don't own this game.&quot;);
+  }
+  // some more code
+}
+</code></pre>
+<h3>REST API details</h3>
+<p>The rest api is implemented using spring <code>@Controllers</code>, it is the simple tool for the task.</p>
+<p>No DELETE actions where implemented, and no integration tests on them were defined. Mostly because I thought it exceeded the scope of the challenge and preferred to use swagger to see the correct behavior of the controllers.</p>
+<p>In a team development, under a professional project, I would prefer to use integration tests to check the behavior of controllers, security, etc.</p>
+<p>It was a challenge to configure correctly <code>springfox + jwt</code>, when doing an authentication in swagge-ui you <strong>MUST</strong> set the token with <code>&quot;Bearer &quot;</code> at the beginning, so if your token is <code>blablabla</code>, instead of set <code>blablabla</code> in the input box, you must put <code>Bearer blablabla</code>. Seems to be a springfox issue, I spent too much time on that, and by now its is awkward, but it can be used.</p>
+<h2>Development environment</h2>
+<p>Used JDK 15, maven wrapper, with maven version 3.6.3, docker, and alpine Postgres image to simulate the persistence layer when working locally. For testing, an in-memory Postgres DB is used (see <a href="https://github.com/zonkyio/embedded-postgres">zonky</a>).</p>
+<p>To install Java 15, you can use <a href="https://sdkman.io/">SDKMAN!</a> or whatever you prefer, to install docker it depends on your SO. To start the postgres container, you can use the script defined at <code>docker/start_pg</code> and to stop it <code>docker/stop_pg</code> (this to scripts are for unix shells if you are working on linux, adapt them it should be easy).</p>
+<p>To generate db and solution documentation (this doc as HTML), just run: <code>./mvnw clean package -PgenerateDocs</code> (in *nix platforms) or <code>mvnw.cmd clean package -PgenerateDocs</code> (in windows platforms). After this command is executed, you will have a database description at <code>/db-docs/index.html</code> and this document available at <code>root path</code> or at <code>/index.html</code>.</p>
