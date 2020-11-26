@@ -36,14 +36,13 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 @Repository
 class GamesRepository
 {
-  private static final List<SqlParameter> BOARD_PARAMETER = List.of(new SqlParameter(Types.ARRAY, "board"));
+  private static final List<SqlParameter> PARAMETERS = List.of(new SqlParameter(Types.VARCHAR, "owner"), new SqlParameter(Types.ARRAY, "board"));
 
   private final JdbcTemplate db;
   private final PreparedStatementCreatorFactory insertIntoGames;
@@ -58,9 +57,10 @@ class GamesRepository
 
   Game findById(final int gameId)
   {
-    final Object[] id = {gameId};
+    final Object[] key = {gameId};
     final var game = db.query("""
                               SELECT
+                                game.owner,
                                 game.status,
                                 game.creation,
                                 game.finishedAt,
@@ -71,14 +71,15 @@ class GamesRepository
                                   WHERE game.id = play.game), 0) as playtimeInMillis
                               FROM minesweeper.Games game
                               WHERE id = ?
-                              """, id, (rs, rowNum) -> {
-      final var status = readStatus(rs.getString(1));
-      final var creation = rs.getObject(2, LocalDateTime.class);
-      final var finishedAt = rs.getObject(3, LocalDateTime.class);
-      final var board = readBoard(rs.getArray(4));
-      final var playTime = Duration.ofMillis(rs.getLong(5));
+                              """, key, (rs, rowNum) -> {
+      final var gameOwner = rs.getString(1);
+      final var status = readStatus(rs.getString(2));
+      final var creation = rs.getObject(3, LocalDateTime.class);
+      final var finishedAt = rs.getObject(4, LocalDateTime.class);
+      final var board = readBoard(rs.getArray(5));
+      final var playTime = Duration.ofMillis(rs.getLong(6));
 
-      return new Game(gameId, status, creation, finishedAt, playTime, board.clone());
+      return new Game(gameId, gameOwner, status, creation, finishedAt, playTime, board.clone());
     });
     if (game.isEmpty()) {
       throw new NotFound("No Game is defined with id=" + gameId);
@@ -86,7 +87,7 @@ class GamesRepository
     return game.get(0);
   }
 
-  List<Game> findAll()
+  List<Game> findAllOf(final String gameOwner)
   {
     return db.query("""
                     SELECT
@@ -100,8 +101,9 @@ class GamesRepository
                         FROM minesweeper.PlayTimes play
                         WHERE game.id = play.game), 0) as playtimeInMillis
                     FROM minesweeper.Games game
+                    WHERE game.owner = ?
                     ORDER BY game.creation
-                    """, (rs, rowNum) -> {
+                    """, new Object[]{gameOwner}, (rs, rowNum) -> {
       final var id = rs.getInt(1);
       final var status = readStatus(rs.getString(2));
       final var creation = rs.getObject(3, LocalDateTime.class);
@@ -109,15 +111,14 @@ class GamesRepository
       final var board = readBoard(rs.getArray(5));
       final var playTime = Duration.ofMillis(rs.getLong(6));
 
-      return new Game(id, status, creation, finishedAt, playTime, board.clone());
+      return new Game(id, gameOwner, status, creation, finishedAt, playTime, board.clone());
     });
   }
 
-  int createGameWith(final int[][] board)
+  int createGameWith(final String ownerEmail, final int[][] board)
   {
     final var gameId = new GeneratedKeyHolder();
-    // use singletonList instead of List.of because the last one creates a list of int[]
-    final var createGame = insertIntoGames.newPreparedStatementCreator(Collections.singletonList(board));
+    final var createGame = insertIntoGames.newPreparedStatementCreator(List.of(ownerEmail, board));
     db.update(createGame, gameId);
     return gameId.getKey().intValue();
   }
@@ -136,7 +137,7 @@ class GamesRepository
   private static PreparedStatementCreatorFactory makeInsertIntoGames()
   {
     final PreparedStatementCreatorFactory insertIntoGames;
-    insertIntoGames = new PreparedStatementCreatorFactory("INSERT INTO minesweeper.Games(board) VALUES (?)", BOARD_PARAMETER);
+    insertIntoGames = new PreparedStatementCreatorFactory("INSERT INTO minesweeper.Games(owner, board) VALUES (?, ?)", PARAMETERS);
     insertIntoGames.setReturnGeneratedKeys(true);
     insertIntoGames.setGeneratedKeysColumnNames("id");
     return insertIntoGames;

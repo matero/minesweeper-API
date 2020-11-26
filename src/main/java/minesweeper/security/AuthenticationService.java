@@ -1,6 +1,7 @@
 package minesweeper.security;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -41,6 +42,16 @@ public final class AuthenticationService
     final var authenticationTokenDetails = new TokenDetails(id, email, roles, issuedDate, expirationDate, NO_REFRESHES_DONE, refreshLimit);
 
     return tokenIssuer.issueTokenFor(authenticationTokenDetails);
+  }
+
+  public String currentAccountEmail()
+  {
+    final var authentication = (TokenBasedAuthentication) SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null) {
+      return null;
+    } else {
+      return authentication.getName();
+    }
   }
 
   private String generateTokenIdentifier()

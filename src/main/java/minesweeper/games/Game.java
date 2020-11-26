@@ -43,6 +43,8 @@ final class Game
   private static final char FLAG_MARK = '?';
 
   @JsonProperty final int id;
+  @JsonIgnore final String owner;
+
   @JsonProperty final GameStatus status;
   @JsonProperty final LocalDateTime creation;
   @JsonProperty final LocalDateTime finishedAt;
@@ -74,13 +76,21 @@ final class Game
   // on creation ALL values are between 0..9 -> no cell is known
   @NotNull @JsonIgnore final int[][] board;
 
-  Game(final int id, final GameStatus status, final LocalDateTime creation, final LocalDateTime finishedAt, final Duration playTime, final int[][] board)
+  Game(
+      final int id,
+      final String owner,
+      final GameStatus status,
+      final LocalDateTime creation,
+      final LocalDateTime finishedAt,
+      final Duration playTime,
+      final int[][] board)
   {
     this.id = id;
     this.status = status;
     this.creation = creation;
     this.finishedAt = finishedAt;
     this.playTime = playTime;
+    this.owner = owner;
     this.board = board;
   }
 

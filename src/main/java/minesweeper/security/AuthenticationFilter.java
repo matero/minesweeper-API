@@ -36,7 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Component
-public class AuthenticationFilter extends OncePerRequestFilter
+class AuthenticationFilter extends OncePerRequestFilter
 {
   private static final String BEARER = "Bearer ";
   private static final int BEARER_LENGTH = BEARER.length();

@@ -22,9 +22,13 @@
  SOFTWARE.
  */
 
-CREATE TYPE minesweeper.GameStatus AS ENUM ('CREATED', 'PLAYING', 'PAUSED', 'WON', 'LOOSE');
+CREATE
+TYPE minesweeper.GameStatus AS ENUM ('CREATED', 'PLAYING', 'PAUSED', 'WON', 'LOOSE');
 
-CREATE CAST (varchar AS minesweeper.GameStatus) WITH INOUT AS IMPLICIT;
+CREATE
+CAST
+    (varchar AS minesweeper.GameStatus)
+    WITH INOUT AS IMPLICIT;
 
 COMMENT ON TYPE minesweeper.GameStatus IS $$Possible status of a minesweeper game.
 
@@ -38,15 +42,19 @@ $$;
 
 CREATE TABLE minesweeper.Games
 (
-    id    SERIAL PRIMARY KEY,
-    status minesweeper.GameStatus DEFAULT 'CREATED' NOT NULL,
-    creation TIMESTAMP DEFAULT current_timestamp NOT NULL,
+    id         SERIAL,
+    owner      VARCHAR(255)                             NOT NULL REFERENCES minesweeper.Accounts (email),
+    status     minesweeper.GameStatus DEFAULT 'CREATED' NOT NULL,
+    creation   TIMESTAMP DEFAULT current_timestamp      NOT NULL,
     finishedAt TIMESTAMP,
-    board INTEGER[][] NOT NULL
+    board      INTEGER[][]                              NOT NULL,
+
+    PRIMARY KEY (id, owner)
 );
 
 COMMENT ON TABLE minesweeper.Games IS $$Games played or being, by now they only have a unique ID and the board definition$$;
 COMMENT ON COLUMN minesweeper.Games.id IS $$Unique ID of the minesweeper game$$;
+COMMENT ON COLUMN minesweeper.Games.owner IS $$Accounts which is playing the game, no one else should be able to access the game.$$;
 COMMENT ON COLUMN minesweeper.Games.status IS $$Current status of the game$$;
 COMMENT ON COLUMN minesweeper.Games.creation IS $$Instant in which the game was created$$;
 COMMENT ON COLUMN minesweeper.Games.finishedAt IS $$Instant in which the game was finished (the status passed to `WON` or `LOOSE`)$$;

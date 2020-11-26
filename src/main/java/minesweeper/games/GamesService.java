@@ -25,6 +25,7 @@ package minesweeper.games;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -38,23 +39,23 @@ class GamesService
 
   GamesService(final GamesRepository repository) { this.repository = repository; }
 
-  @Transactional(readOnly = true) List<Game> findAll()
+  @Transactional(readOnly = true) List<Game> findAll(final String gameOwner)
   {
-    return repository.findAll();
+    return repository.findAllOf(gameOwner);
   }
 
-  @Transactional Game createGameOfLevel(final GameLevel level)
+  @Transactional Game createGameOfLevel(final String ownerEmail, final GameLevel level)
   {
-    return createCustomGame(level.rows, level.columns, level.mines);
+    return createCustomGame(ownerEmail, level.rows, level.columns, level.mines);
   }
 
-  @Transactional Game createCustomGame(final int rows, final int columns, final int mines)
+  @Transactional Game createCustomGame(final String ownerEmail, final int rows, final int columns, final int mines)
   {
     final var board = new BoardBuilder(rows, columns)
                           .randomlyPlaceMines(mines)
                           .calculateSurroundingMines()
                           .build();
-    final int assignedId = repository.createGameWith(board);
+    final int assignedId = repository.createGameWith(ownerEmail, board);
     final var game = get(assignedId);
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Game#" + assignedId + " created, with board:\n\n" + game.toAsciiTable());
@@ -64,9 +65,9 @@ class GamesService
     return game;
   }
 
-  @Transactional Game reveal(final int gameId, final int row, final int column)
+  @Transactional Game reveal(final int gameId, final String gameOwner, final int row, final int column)
   {
-    final Game game = getGameWithId(gameId);
+    final Game game = getGameWithId(gameId, gameOwner);
     final var cellReveal = game.reveal(row, column);
 
     if (cellReveal.hasNoChanges()) {
@@ -77,9 +78,9 @@ class GamesService
     return get(gameId);
   }
 
-  @Transactional Game flag(final int gameId, final int row, final int column)
+  @Transactional Game flag(final int gameId, final String gameOwner, final int row, final int column)
   {
-    final Game game = getGameWithId(gameId);
+    final Game game = getGameWithId(gameId, gameOwner);
     final var cellFlag = game.flag(row, column);
 
     if (cellFlag.hasNoChanges()) {
@@ -90,9 +91,9 @@ class GamesService
     return get(gameId);
   }
 
-  @Transactional Game unflag(final int gameId, final int row, final int column)
+  @Transactional Game unflag(final int gameId, final String gameOwner, final int row, final int column)
   {
-    final Game game = getGameWithId(gameId);
+    final Game game = getGameWithId(gameId, gameOwner);
     final var cellUnflag = game.unflag(row, column);
 
     if (cellUnflag.hasNoChanges()) {
@@ -103,9 +104,22 @@ class GamesService
     return get(gameId);
   }
 
-  private Game getGameWithId(final int gameId)
+  Game pause(final int gameId, final String gameOwner)
+  {
+    final var game = getGameWithId(gameId, gameOwner);
+    if (game.canBePaused()) {
+      repository.pauseGame(gameId);
+      return get(gameId);
+    }
+    return game;
+  }
+
+  private Game getGameWithId(final int gameId, final String gameOwner)
   {
     final var game = get(gameId);
+    if (!game.owner.equals(gameOwner)) {
+      throw new AccessDeniedException("You don't own this game.");
+    }
     if (game.isFinished()) {
       throw new AlreadyFinished(game);
     }
@@ -113,14 +127,4 @@ class GamesService
   }
 
   private Game get(final int gameId) { return repository.findById(gameId); }
-
-  Game pause(final int gameId)
-  {
-    final var game = getGameWithId(gameId);
-    if (game.canBePaused()) {
-      repository.pauseGame(gameId);
-      return get(gameId);
-    }
-    return game;
-  }
 }

@@ -21,8 +21,16 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-INSERT INTO minesweeper.Accounts(email, name, password)
-VALUES ('test@email.com', 'owner', 'password');
+CREATE TABLE minesweeper.PlayTimes
+(
+    game       INTEGER,
+    startedAt  TIMESTAMP DEFAULT current_timestamp,
+    finishedAt TIMESTAMP,
 
-INSERT INTO minesweeper.Games(id, owner, board)
-VALUES (1, 'test@email.com', '{{1,2,3},{4,5,6},{7,8,9}}');
+    PRIMARY KEY (game, startedAt)
+);
+
+COMMENT ON TABLE minesweeper.PlayTimes IS $$Time elapsed playing Games$$;
+COMMENT ON COLUMN minesweeper.PlayTimes.game IS $$Unique ID of the minesweeper game for which the playing time is being tracked.$$;
+COMMENT ON COLUMN minesweeper.PlayTimes.startedAt IS $$Instant in which the game was started or resumed.$$;
+COMMENT ON COLUMN minesweeper.PlayTimes.finishedAt IS $$Instant in which the game was finished or paused.$$;

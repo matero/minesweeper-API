@@ -34,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.lang.NonNull;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -175,6 +176,18 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler
   Map<String, Object> onUsernameNotFoundException(final UsernameNotFoundException e)
   {
     return ILLEGAL_CREDENTIALS;
+  }
+
+  @ExceptionHandler(AccessDeniedException.class) @ResponseStatus(HttpStatus.UNAUTHORIZED) @ResponseBody @NonNull
+  Map<String, Object> onAccessDeniedException(final AccessDeniedException e)
+  {
+    contactSecurityAdminsOfPossibleAttack(e);
+    return Map.of("errors", e.getMessage());
+  }
+
+  private void contactSecurityAdminsOfPossibleAttack(final AccessDeniedException e)
+  {
+    // contact dev op by configured method advising him of the unauthorized access.
   }
 
   @ExceptionHandler(RuntimeException.class) @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR) @ResponseBody @NonNull

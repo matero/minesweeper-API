@@ -79,6 +79,7 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
     assertAll("findById(1)",
               () -> assertThat(game, is(notNullValue())),
               () -> assertThat(game.id, is(1)),
+              () -> assertThat(game.owner, is("test@email.com")),
               () -> assertThat(game.status, is(GameStatus.WON)),
               () -> assertThat(game.creation, is(LocalDateTime.of(2008, Month.MARCH, 20, 0, 0))),
               () -> assertThat(game.finishedAt, is(LocalDateTime.of(2008, Month.MARCH, 21, 0, 0))),
@@ -142,7 +143,7 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
     noGamesAreDefined();
 
     //when
-    final var games = repo.findAll();
+    final var games = repo.findAllOf("test@email.com");
 
     //then
     assertThat(games, is(empty()));
@@ -151,10 +152,10 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
   @Sql @Test void when_N_Games_are_defined_then_findAll_should_return_all_of_them_sorted_by_creation_date()
   {
     //given
-    definedGamesCountIs(3);
+    definedGamesCountIs(5);
 
     //when look for all Game instances
-    final var games = repo.findAll();
+    final var games = repo.findAllOf("test@email.com");
 
     //then
     assertThat(games, hasSize(3));
@@ -163,78 +164,78 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
     assertThat(games.get(2).id, is(equalTo(2)));
   }
 
-  @Test void when_Game_is_created_then_its_assigned_id_is_returned()
+  @Sql("test-account.sql") @Test void when_Game_is_created_then_its_assigned_id_is_returned()
   {
     //given
     noGamesAreDefined();
 
     //when
-    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var gameId = repo.createGameWith("test@email.com", TEST_BOARD);
 
     //then
     assertThat("with vanilla db the serial should NOT be 0", gameId, is(not(equalTo(0))));
   }
 
-  @Test void when_Game_is_created_then_its_state_should_be_CREATED()
+  @Sql("test-account.sql") @Test void when_Game_is_created_then_its_state_should_be_CREATED()
   {
     //given
     noGamesAreDefined();
 
     //when
-    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var gameId = repo.createGameWith("test@email.com", TEST_BOARD);
     final var game = repo.findById(gameId);
 
     //then
     assertThat(game.status, is(GameStatus.CREATED));
   }
 
-  @Test void when_Game_is_created_then_its_creation_should_be_current_timestamp()
+  @Sql("test-account.sql") @Test void when_Game_is_created_then_its_creation_should_be_current_timestamp()
   {
     //given
     noGamesAreDefined();
     final var expectedCreation = LocalDateTime.now();
 
     //when
-    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var gameId = repo.createGameWith("test@email.com", TEST_BOARD);
     final var game = repo.findById(gameId);
 
     //then
     assertThat(game.creation, is(within(20, ChronoUnit.MILLIS, expectedCreation)));
   }
 
-  @Test void when_Game_is_created_then_its_finishedAt_should_be_null()
+  @Sql("test-account.sql") @Test void when_Game_is_created_then_its_finishedAt_should_be_null()
   {
     //given
     noGamesAreDefined();
 
     //when
-    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var gameId = repo.createGameWith("test@email.com", TEST_BOARD);
     final var game = repo.findById(gameId);
 
     //then
     assertThat(game.finishedAt, is(nullValue()));
   }
 
-  @Test void when_Game_is_created_then_its_playTime_should_be_ZERO()
+  @Sql("test-account.sql") @Test void when_Game_is_created_then_its_playTime_should_be_ZERO()
   {
     //given
     noGamesAreDefined();
 
     //when
-    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var gameId = repo.createGameWith("test@email.com", TEST_BOARD);
     final var game = repo.findById(gameId);
 
     //then
     assertThat(game.playTime, is(equalTo(Duration.ZERO)));
   }
 
-  @Test void when_Game_is_created_then_its_board_should_be_equivalent_to_the_one_defined()
+  @Sql("test-account.sql") @Test void when_Game_is_created_then_its_board_should_be_equivalent_to_the_one_defined()
   {
     //given
     noGamesAreDefined();
 
     //when
-    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var gameId = repo.createGameWith("test@email.com", TEST_BOARD);
     final var game = repo.findById(gameId);
 
     //then
@@ -244,13 +245,13 @@ final class Games_Repository_tests extends JdbcTemplateRepositoryTestCase
     assertThat(game.board, is(equalTo(TEST_BOARD)));
   }
 
-  @Test void when_Game_is_created_then_all_board_cells_should_be_UNDISCOVERED()
+  @Sql("test-account.sql") @Test void when_Game_is_created_then_all_board_cells_should_be_UNDISCOVERED()
   {
     //given
     noGamesAreDefined();
 
     //when
-    final var gameId = repo.createGameWith(TEST_BOARD);
+    final var gameId = repo.createGameWith("test@email.com", TEST_BOARD);
     final var game = repo.findById(gameId);
 
     //then

@@ -25,6 +25,7 @@ package minesweeper.games;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import minesweeper.security.AuthenticationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,20 +47,25 @@ import java.util.List;
 @RequestMapping(path = "/games", produces = "application/json; charset=utf-8")
 class Games
 {
-  private final GamesService service;
+  private final GamesService games;
+  private final AuthenticationService authentication;
 
-  Games(final GamesService service) { this.service = service; }
+  Games(final GamesService games, final AuthenticationService authentication)
+  {
+    this.games = games;
+    this.authentication = authentication;
+  }
 
   /**
-   * Gets all the {@link Game}s (being?) played.
+   * Gets all the {@link Game}s (being?) played by the active account.
    *
-   * @return the list of known {@link Game}s, sorted by start time.
+   * @return the list of known {@link Game}s, sorted by creation time.
    */
-  @ApiOperation("Gets all the Games (being?) played, sorted by start time.")
+  @ApiOperation("Gets all the Games (being?) played by the active account, sorted by creation time.")
   @GetMapping
   List<Game> index()
   {
-    return service.findAll();
+    return games.findAll(gameOwner());
   }
 
   /**
@@ -74,7 +80,7 @@ class Games
       @ApiParam(value = "level of the Game to create.", required = true, readOnly = true) @PathVariable final GameLevel level,
       final HttpServletResponse response)
   {
-    final var game = service.createGameOfLevel(level);
+    final var game = games.createGameOfLevel(gameOwner(), level);
     response.setStatus(HttpStatus.CREATED.value());
     return game;
   }
@@ -95,7 +101,7 @@ class Games
       @ApiParam(value = "mines in the Game's board.", readOnly = true) @RequestParam @NotNull @Positive final Integer mines,
       final HttpServletResponse response)
   {
-    final var game = service.createCustomGame(rows, columns, mines);
+    final var game = games.createCustomGame(gameOwner(), rows, columns, mines);
     response.setStatus(HttpStatus.CREATED.value());
     return game;
   }
@@ -120,7 +126,7 @@ class Games
       @ApiParam(value = "row of the cell to reveal.", readOnly = true) @PositiveOrZero @PathVariable final int row,
       @ApiParam(value = "column of the cell to reveal.", readOnly = true) @PositiveOrZero @PathVariable final int column)
   {
-    return service.reveal(gameId, row, column);
+    return games.reveal(gameId, gameOwner(), row, column);
   }
 
   /**
@@ -144,7 +150,7 @@ class Games
       @ApiParam(value = "row of the cell to flag.", readOnly = true) @PositiveOrZero @PathVariable final int row,
       @ApiParam(value = "column of the cell to flag.", readOnly = true) @PositiveOrZero @PathVariable final int column)
   {
-    return service.flag(gameId, row, column);
+    return games.flag(gameId, gameOwner(), row, column);
   }
 
   /**
@@ -168,7 +174,7 @@ class Games
       @ApiParam(value = "row of the cell to flag.", readOnly = true) @PositiveOrZero @PathVariable final int row,
       @ApiParam(value = "column of the cell to flag.", readOnly = true) @PositiveOrZero @PathVariable final int column)
   {
-    return service.unflag(gameId, row, column);
+    return games.unflag(gameId, gameOwner(), row, column);
   }
 
   /**
@@ -187,6 +193,8 @@ class Games
   @PutMapping("{gameId}/pause")
   Game pause(@ApiParam(value = "gameId of the game on which the cell must be flagged.", readOnly = true) @PathVariable final int gameId)
   {
-    return service.pause(gameId);
+    return games.pause(gameId, gameOwner());
   }
+
+  private String gameOwner() { return authentication.currentAccountEmail(); }
 }
