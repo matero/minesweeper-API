@@ -26,7 +26,6 @@ package minesweeper.accounts;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import minesweeper.security.AuthenticationService;
-import minesweeper.security.AuthenticationToken;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 import java.util.Set;
 
 @Validated
@@ -62,13 +62,13 @@ class Accounts
    */
   @ApiOperation("Registers an account.")
   @PostMapping("/register")
-  AuthenticationToken register(
+  Map<String, String> register(
       @ApiParam(value = "data of the account to create.", required = true, readOnly = true) @RequestBody @Validated final Registration registration,
       final HttpServletResponse response)
   {
     final var account = service.createAccountWith(registration);
     final var token = authenticationService.issueToken(account.email, USER_ROLE);
     response.setStatus(HttpStatus.CREATED.value());
-    return new AuthenticationToken(token);
+    return Map.of("email", registration.email, "name", registration.name, "token", token);
   }
 }

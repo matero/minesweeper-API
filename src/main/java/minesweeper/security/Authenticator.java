@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.util.Map;
 
 @OpenAPIDefinition(info = @Info(description = "provides endpoint to authenticate users."))
 @Validated
@@ -30,11 +31,12 @@ class Authenticator
 
   @ApiOperation(value = "Authenticate a registered user.")
   @PostMapping("/login")
-  public AuthenticationToken login(final @RequestBody @Valid Credentials credentials)
+  public Map<String, Object> login(final @RequestBody @Valid Credentials credentials)
   {
     final var accountDetails = credentialsValidator.validateCredentials(credentials);
-    final var token = authenticationService.issueToken(accountDetails.getUsername(), AccountDetails.ROLES);
-    return new AuthenticationToken(token);
+    final var email = accountDetails.getUsername();
+    final var token = authenticationService.issueToken(email, AccountDetails.ROLES);
+    return Map.of("email", email, "name", accountDetails.name, "token", token);
   }
 
   @ApiOperation(value = "Refresh the authentication token of a user.", authorizations = @Authorization("Bearer"))

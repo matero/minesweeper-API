@@ -38,11 +38,12 @@ class AccountDetailsService implements UserDetailsService
 
   @Override @Transactional(readOnly = true) public AccountDetails loadUserByUsername(final String email) throws UsernameNotFoundException
   {
-    final var details = db.query("SELECT password FROM minesweeper.Accounts WHERE email = ?",
+    final var details = db.query("SELECT name, password FROM minesweeper.Accounts WHERE email = ?",
                                  new Object[]{email},
                                  (rs, rowNum) -> {
-                                   final var password = rs.getString(1);
-                                   return new AccountDetails(email, password);
+                                   final var name = rs.getString(1);
+                                   final var password = rs.getString(2);
+                                   return new AccountDetails(email, name, password);
                                  });
     if (details.isEmpty()) {
       throw new UsernameNotFoundException("Account with email '" + email + "' not found.");

@@ -34,12 +34,14 @@ class AccountDetails implements UserDetails
   private static final Set<? extends GrantedAuthority> AUTHORITIES = Set.of(UserGrantedAuthority.INSTANCE);
 
   private final String email;
+  final String name;
   private final String password;
 
-  AccountDetails(final String email, final String password)
+  AccountDetails(final String email, final String name, final String password)
   {
-    this.password = password;
     this.email = email;
+    this.name = name;
+    this.password = password;
   }
 
   @Override public Set<? extends GrantedAuthority> getAuthorities() { return AUTHORITIES; }
